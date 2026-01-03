@@ -1,0 +1,170 @@
+// components/home/categories/GoingViralSection.tsx
+import { WPPostWithMedia, WPCategory } from '../../../types/wordpress';
+import { cleanTextContent } from '../utils/contentCleaner';
+import { formatRelativeTime } from '../utils/timeFormatter';
+import Link from 'next/link';
+
+interface GoingViralSectionProps {
+  posts: WPPostWithMedia[];
+  categories: WPCategory[];
+  isLast?: boolean;
+}
+
+export default function GoingViralSection({ posts, categories, isLast = false }: GoingViralSectionProps) {
+  if (posts.length === 0) return null;
+
+  const getPostCategoryName = (post: WPPostWithMedia, allCategories: WPCategory[]): string => {
+    if (!post.categories || post.categories.length === 0) return 'Viral';
+    
+    const categoryId = typeof post.categories[0] === 'number' 
+      ? post.categories[0] 
+      : (post.categories[0] as any).id;
+    
+    const category = allCategories.find(cat => cat.id === categoryId);
+    return category ? cleanTextContent(category.name) : 'Viral';
+  };
+
+  // Jika posts memiliki kategori, ambil dari post pertama
+  const firstPost = posts[0];
+  let sectionName = 'Going Viral';
+  let sectionSlug = 'viral';
+  
+  if (firstPost.categories && firstPost.categories.length > 0) {
+    const categoryId = typeof firstPost.categories[0] === 'number' 
+      ? firstPost.categories[0] 
+      : (firstPost.categories[0] as any).id;
+    
+    const category = categories.find(cat => cat.id === categoryId);
+    if (category) {
+      sectionName = cleanTextContent(category.name);
+      sectionSlug = category.slug;
+    }
+  }
+
+  // Fungsi untuk generate read time yang konsisten (tanpa Math.random)
+  const getReadTime = (postId: number): number => {
+    // Gunakan post.id untuk hasil yang konsisten antara server dan client
+    return (postId % 5) + 1; // Hasil selalu antara 1-5
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-gray-900 via-blue-900 to-black rounded-3xl p-8 mb-16 shadow-2xl">
+      {/* Section Header dengan gaya viral/meme - Kekalkan warna oren */}
+      <div className="mb-8 text-center">
+        <div className="inline-block bg-gradient-to-r from-orange-500 to-red-600 px-8 py-4 rounded-full mb-4 shadow-xl">
+          <h2 className="text-3xl font-bold text-white flex items-center justify-center">
+            <svg className="w-8 h-8 mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
+            </svg>
+            {sectionName}
+          </h2>
+        </div>
+        <p className="text-gray-300 text-lg font-medium">Trending topics everyone is talking about</p>
+        <div className="w-32 h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mx-auto mt-4"></div>
+      </div>
+
+      {/* Viral Grid - Compact dengan icon viral */}
+      <div className="mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posts.slice(0, 6).map((post, index) => (
+            <div key={post.id} className="bg-gray-800/50 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] transition-all duration-300 hover:-translate-y-2 group border border-gray-700/50">
+              {/* Viral Badge - Kekalkan warna oren/merah */}
+              <div className="absolute top-4 right-4 z-10">
+                <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white text-xs px-4 py-2 rounded-full font-bold flex items-center shadow-lg">
+                  <svg className="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
+                  </svg>
+                  #{index + 1} VIRAL
+                </div>
+              </div>
+              
+              {post.featured_media_url && (
+                <div className="w-full h-48 relative overflow-hidden">
+                  <img 
+                    src={post.featured_media_url} 
+                    alt={cleanTextContent(post.featured_media_alt || post.title.rendered)}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 brightness-90"
+                  />
+                  {/* Overlay gradient gelap */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+                  {/* Glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                </div>
+              )}
+              
+              <div className="p-6 bg-gradient-to-b from-gray-900/80 to-gray-900">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-gray-400 text-xs font-medium">
+                    {formatRelativeTime(post.date)}
+                  </span>
+                  <span className="bg-orange-900/50 text-orange-300 text-xs px-3 py-1.5 rounded-full font-medium border border-orange-700/30">
+                    {getPostCategoryName(post, categories)}
+                  </span>
+                </div>
+                
+                <Link href={`/posts/${post.slug}`}>
+                  <h4 
+                    className="font-bold text-white text-lg hover:text-orange-300 transition-colors cursor-pointer line-clamp-2 mb-4 leading-tight"
+                    dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 
+                  />
+                </Link>
+                
+                {/* Author/Byline */}
+                <div className="flex items-center justify-between text-xs text-gray-400 mt-5 pt-5 border-t border-gray-700/50">
+                  {post.authors && post.authors.length > 0 ? (
+                    <span className="flex items-center">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-900/50 to-red-900/50 flex items-center justify-center mr-2 border border-orange-700/30">
+                        <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                      <span className="text-gray-300 font-medium">{post.authors[0].display_name}</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-900/50 to-red-900/50 flex items-center justify-center mr-2 border border-orange-700/30">
+                        <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                        </svg>
+                      </div>
+                      <span className="text-gray-300 font-medium">Sun Media</span>
+                    </span>
+                  )}
+                  
+                  {/* Read time indicator */}
+                  <span className="text-gray-300 text-xs flex items-center bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700/50">
+                    <svg className="w-4 h-4 text-gray-400 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {getReadTime(post.id)} min read
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* View All Button - Kekalkan warna oren */}
+        <div className="text-center mt-12">
+          <Link 
+            href={`/category/${sectionSlug}`}
+            className="inline-flex items-center px-12 py-5 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl font-bold hover:from-orange-700 hover:to-red-700 transition-all duration-300 hover:shadow-[0_20px_60px_-10px_rgba(249,115,22,0.5)] transform hover:scale-105 shadow-xl border border-orange-500/30"
+          >
+            <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            EXPLORE VIRAL STORIES
+            <svg className="w-6 h-6 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </Link>
+        </div>
+      </div>
+
+      {/* Line break - gradient gelap */}
+      {!isLast && (
+        <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent mt-8"></div>
+      )}
+    </div>
+  );
+}
