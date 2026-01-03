@@ -1,4 +1,4 @@
-// types/wordpress.tsx - PERBAIKI EXPORT
+// types/wordpress.tsx
 export interface WPAuthor {
   term_id: number;
   user_id: number;
@@ -48,7 +48,6 @@ export interface WPMedia {
   };
 }
 
-// types/wordpress.tsx - UPDATE INI
 export interface WPPost {
   id: number;
   slug: string;
@@ -71,11 +70,11 @@ export interface WPPost {
   type: string;
   link: string;
   author: number;
-  featured_media: number; // ✅ Ini adalah ID (number)
-  featured_media_url?: string; // ✅ Tambahkan ini untuk URL
-  featured_media_alt?: string; // ✅ Tambahkan ini untuk alt text
-  featured_media_width?: number; // ✅ Tambahkan ini untuk width
-  featured_media_height?: number; // ✅ Tambahkan ini untuk height
+  featured_media: number;
+  featured_media_url?: string;
+  featured_media_alt?: string;
+  featured_media_width?: number;
+  featured_media_height?: number;
   comment_status: string;
   ping_status: string;
   sticky: boolean;
@@ -85,7 +84,7 @@ export interface WPPost {
     footnotes: string;
   };
   categories: number[];
-  tags: number[];
+  tags: number[]; // Pastikan ini ada
   authors?: WPAuthor[];
   class_list?: {
     [key: string]: string;
@@ -99,7 +98,6 @@ export interface WPPost {
   };
 }
 
-// ✅ PASTIKAN WPPostWithMedia DEEXPORT
 export interface WPPostWithMedia extends WPPost {
   featured_media_url?: string;
   featured_media_alt?: string;
@@ -118,7 +116,6 @@ export interface WPPage {
   };
 }
 
-// Header Types
 export interface BreakingNews {
   id: number;
   title: string;

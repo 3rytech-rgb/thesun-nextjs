@@ -7,11 +7,12 @@ import NetworkImage from '../common/NetworkImage';
 import { useState } from 'react';
 
 interface FeaturedStoryProps {
-  post: WPPostWithMedia;
+  exclusivePost: WPPostWithMedia; // Remove nullable, sekarang wajib ada post
   categories: WPCategory[];
+  isNewExclusive?: boolean;
 }
 
-export default function FeaturedStory({ post, categories }: FeaturedStoryProps) {
+export default function FeaturedStory({ exclusivePost, categories, isNewExclusive = true }: FeaturedStoryProps) {
   const [imageError, setImageError] = useState(false);
   
   const getPostCategoryName = (post: WPPostWithMedia, allCategories: WPCategory[]): string => {
@@ -25,22 +26,9 @@ export default function FeaturedStory({ post, categories }: FeaturedStoryProps) 
     return category ? cleanTextContent(category.name) : 'Uncategorized';
   };
 
-  if (!post) return null;
-
-  // Debug: Log image URL untuk troubleshooting
-  if (process.env.NODE_ENV === 'development') {
-    console.log('FeaturedStory - Image URL:', post.featured_media_url);
-    console.log('FeaturedStory - Post:', {
-      id: post.id,
-      title: cleanTextContent(post.title.rendered),
-      hasFeaturedMedia: !!post.featured_media_url,
-      mediaAlt: post.featured_media_alt
-    });
-  }
-
-  const cleanTitle = cleanTextContent(post.title.rendered);
-  const cleanAlt = cleanTextContent(post.featured_media_alt || post.title.rendered);
-  const categoryName = getPostCategoryName(post, categories);
+  const cleanTitle = cleanTextContent(exclusivePost.title.rendered);
+  const cleanAlt = cleanTextContent(exclusivePost.featured_media_alt || exclusivePost.title.rendered);
+  const categoryName = getPostCategoryName(exclusivePost, categories);
 
   // Handle author avatar
   const getAuthorAvatarUrl = (author: WPAuthor): string => {
@@ -55,32 +43,23 @@ export default function FeaturedStory({ post, categories }: FeaturedStoryProps) 
 
   return (
     <article className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-      {/* Featured Image dengan fallback handling */}
+      {/* Featured Image */}
       <div className="w-full h-80 relative bg-gradient-to-br from-gray-100 to-gray-200">
-        {post.featured_media_url && !imageError ? (
+        {exclusivePost.featured_media_url && !imageError ? (
           <NetworkImage
-            src={post.featured_media_url}
+            src={exclusivePost.featured_media_url}
             alt={cleanAlt}
             fill={true}
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             priority={true}
             onError={() => {
-              console.warn(`Failed to load image: ${post.featured_media_url}`);
+              console.warn(`Failed to load image: ${exclusivePost.featured_media_url}`);
               setImageError(true);
-            }}
-            onLoadingComplete={(result: { naturalWidth: number; naturalHeight: number }) => {
-              if (process.env.NODE_ENV === 'development') {
-                console.log('Image loaded successfully:', {
-                  src: post.featured_media_url,
-                  width: result.naturalWidth,
-                  height: result.naturalHeight
-                });
-              }
             }}
           />
         ) : (
-          // Fallback content ketika gambar gagal load
+          // Fallback content
           <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
             <div className="text-gray-400 mb-4">
               <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,18 +75,39 @@ export default function FeaturedStory({ post, categories }: FeaturedStoryProps) 
           </div>
         )}
         
-        {/* Gradient overlay untuk readability */}
+        {/* Badge untuk exclusive atau featured */}
+        {isNewExclusive ? (
+          <div className="absolute top-4 left-4">
+            <span className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
+              🔥 EXCLUSIVE STORY
+            </span>
+          </div>
+        ) : (
+          <div className="absolute top-4 left-4">
+            <span className="bg-gradient-to-r from-red-600 to-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+              ⭐ FEATURED STORY
+            </span>
+          </div>
+        )}
+        
+        {/* Gradient overlay */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/30 to-transparent"></div>
       </div>
       
       <div className="p-6">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div className="flex items-center">
-            <span className="bg-gradient-to-r from-red-600 to-orange-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-md">
-              Featured Story
-            </span>
+            {isNewExclusive ? (
+              <span className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-md">
+                Exclusive Content
+              </span>
+            ) : (
+              <span className="bg-gradient-to-r from-red-600 to-orange-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-md">
+                Featured Story
+              </span>
+            )}
             <span className="text-gray-500 text-sm ml-3">
-              {formatRelativeTime(post.date)}
+              {formatRelativeTime(exclusivePost.date)}
             </span>
           </div>
           
@@ -121,7 +121,7 @@ export default function FeaturedStory({ post, categories }: FeaturedStoryProps) 
           )}
         </div>
         
-        <Link href={`/posts/${post.slug}`}>
+        <Link href={`/posts/${exclusivePost.slug}`}>
           <h2 
             className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 hover:text-red-600 transition-colors cursor-pointer leading-tight"
             dangerouslySetInnerHTML={{ __html: cleanTitle }} 
@@ -129,19 +129,19 @@ export default function FeaturedStory({ post, categories }: FeaturedStoryProps) 
         </Link>
         
         <div className="text-gray-700 leading-relaxed text-lg mb-6 line-clamp-3">
-          {post.excerpt?.rendered ? (
+          {exclusivePost.excerpt?.rendered ? (
             <div 
               dangerouslySetInnerHTML={{ 
                 __html: getFullParagraphExcerpt(
-                  post.excerpt.rendered
+                  exclusivePost.excerpt.rendered
                 )
               }} 
             />
-          ) : post.content?.rendered ? (
+          ) : exclusivePost.content?.rendered ? (
             <div 
               dangerouslySetInnerHTML={{ 
                 __html: getFullParagraphExcerpt(
-                  post.content.rendered.substring(0, 300) + '...'
+                  exclusivePost.content.rendered.substring(0, 300) + '...'
                 )
               }} 
             />
@@ -152,17 +152,17 @@ export default function FeaturedStory({ post, categories }: FeaturedStoryProps) 
           )}
         </div>
         
-        {/* Author info jika ada */}
-        {post.authors && post.authors.length > 0 && (
+        {/* Author info */}
+        {exclusivePost.authors && exclusivePost.authors.length > 0 && (
           <div className="flex items-center mb-6 pt-4 border-t border-gray-100">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden mr-3">
                 {(() => {
-                  const avatarUrl = getAuthorAvatarUrl(post.authors[0]);
+                  const avatarUrl = getAuthorAvatarUrl(exclusivePost.authors[0]);
                   return avatarUrl ? (
                     <img 
                       src={avatarUrl} 
-                      alt={post.authors[0].display_name}
+                      alt={exclusivePost.authors[0].display_name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
@@ -172,14 +172,14 @@ export default function FeaturedStory({ post, categories }: FeaturedStoryProps) 
                   ) : (
                     <div className="w-full h-full bg-gray-300 flex items-center justify-center">
                       <span className="text-gray-600 font-medium text-sm">
-                        {post.authors[0].display_name.charAt(0)}
+                        {exclusivePost.authors[0].display_name.charAt(0)}
                       </span>
                     </div>
                   );
                 })()}
               </div>
               <div>
-                <p className="font-medium text-gray-900">{post.authors[0].display_name}</p>
+                <p className="font-medium text-gray-900">{exclusivePost.authors[0].display_name}</p>
                 <p className="text-gray-500 text-sm">Author</p>
               </div>
             </div>
@@ -188,10 +188,10 @@ export default function FeaturedStory({ post, categories }: FeaturedStoryProps) 
         
         <div className="mt-6 pt-4 border-t border-gray-100">
           <Link 
-            href={`/posts/${post.slug}`}
+            href={`/posts/${exclusivePost.slug}`}
             className="inline-flex items-center bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-xl"
           >
-            <span>Read Full Story</span>
+            <span>{isNewExclusive ? 'Read Exclusive Story' : 'Read Full Story'}</span>
             <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>

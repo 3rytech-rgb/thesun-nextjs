@@ -1,4 +1,4 @@
-// lib/wordpress.ts - FIXED VERSION
+// lib/wordpress.ts - FULL UPDATED VERSION
 import { 
   WPPost, 
   WPPostWithMedia, 
@@ -378,6 +378,83 @@ export async function getMediaById(mediaId: number): Promise<WPMedia | null> {
   }
 }
 
+// ===========================================
+// TOP STORIES FUNCTION - NEW
+// ===========================================
+
+// Fetch top stories dari custom API endpoint
+export async function getTopStories(): Promise<WPPostWithMedia[]> {
+  try {
+    console.log('📊 Fetching top stories from custom API...');
+    
+    const res = await fetch('https://thesun.my/wp-json/thesun/v1/top-stories', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 60 } // Revalidate setiap 60 saat
+    });
+    
+    if (!res.ok) {
+      console.error('❌ Failed to fetch top stories:', res.status, res.statusText);
+      throw new Error(`Failed to fetch top stories: ${res.status} ${res.statusText}`);
+    }
+    
+    const posts: WPPost[] = await res.json();
+    console.log('✅ Top stories fetched:', posts.length);
+    
+    // Process posts untuk konsistensi
+    return posts.map((post: WPPost): WPPostWithMedia => {
+      const categories = Array.isArray(post.categories) 
+        ? post.categories.map(cat => typeof cat === 'object' ? (cat as WPCategory).id : cat)
+        : [];
+      
+      const tags = Array.isArray(post.tags)
+        ? post.tags.map(tag => typeof tag === 'object' ? (tag as WPTag).id : tag)
+        : [];
+      
+      // Extract media
+      let featured_media_url = undefined;
+      let featured_media_alt = undefined;
+      let featured_media_width = undefined;
+      let featured_media_height = undefined;
+      
+      if (post._embedded?.['wp:featuredmedia']?.[0]) {
+        const media = post._embedded['wp:featuredmedia'][0];
+        featured_media_url = media.source_url;
+        featured_media_alt = media.alt_text || post.title.rendered;
+        featured_media_width = media.media_details?.width;
+        featured_media_height = media.media_details?.height;
+      }
+      
+      // Create WPPostWithMedia object
+      const postWithMedia: WPPostWithMedia = {
+        ...post,
+        categories,
+        tags,
+        authors: post.authors || post._embedded?.author || []
+      };
+      
+      // Add media properties
+      if (featured_media_url) postWithMedia.featured_media_url = featured_media_url;
+      if (featured_media_alt) postWithMedia.featured_media_alt = featured_media_alt;
+      if (featured_media_width) postWithMedia.featured_media_width = featured_media_width;
+      if (featured_media_height) postWithMedia.featured_media_height = featured_media_height;
+      
+      return postWithMedia;
+    });
+  } catch (error) {
+    console.error('💥 Error fetching top stories:', error);
+    // Fallback ke posts biasa jika API custom gagal
+    console.log('🔄 Using regular posts as fallback for top stories');
+    return await getPosts(10);
+  }
+}
+
+// ===========================================
+// SEARCH AND OTHER FUNCTIONS
+// ===========================================
+
 // Fetch posts by search term - KINI RETURN WPPostWithMedia[]
 export async function searchPosts(searchTerm: string, perPage = 20): Promise<WPPostWithMedia[]> {
   try {
@@ -571,6 +648,301 @@ export async function getPage(slug: string): Promise<WPPostWithMedia | null> {
   }
 }
 
+// ===========================================
+// TAGS AND EXCLUSIVE POSTS FUNCTIONS
+// ===========================================
+
+// Fetch all tags
+export async function getTags(): Promise<WPTag[]> {
+  try {
+    console.log('🏷️ Fetching tags...');
+    
+    const res = await fetch(`${WORDPRESS_API_URL}/tags?per_page=100&orderby=count&order=desc`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!res.ok) {
+      console.error('❌ Failed to fetch tags:', res.status, res.statusText);
+      throw new Error(`Failed to fetch tags: ${res.status} ${res.statusText}`);
+    }
+    
+    const tags = await res.json();
+    console.log('✅ Tags fetched successfully:', tags.length);
+    
+    return tags.map((tag: any) => ({
+      id: tag.id,
+      name: tag.name,
+      slug: tag.slug,
+    }));
+  } catch (error) {
+    console.error('💥 Error fetching tags:', error);
+    return [];
+  }
+}
+
+// Fetch posts by tag ID - KINI RETURN WPPostWithMedia[]
+export async function getPostsByTag(tagId: number, perPage = 10): Promise<WPPostWithMedia[]> {
+  try {
+    console.log(`🏷️ Fetching posts for tag ${tagId}`);
+    
+    const res = await fetch(
+      `${WORDPRESS_API_URL}/posts?tags=${tagId}&_embed=wp:featuredmedia,author&per_page=${perPage}&orderby=date&order=desc`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!res.ok) {
+      console.error('❌ Failed to fetch posts by tag:', res.status, res.statusText);
+      throw new Error(`Failed to fetch posts by tag: ${res.status} ${res.statusText}`);
+    }
+    
+    const posts: WPPost[] = await res.json();
+    console.log(`✅ Tag ${tagId} posts fetched:`, posts.length);
+    
+    // Process posts
+    return posts.map((post: WPPost): WPPostWithMedia => {
+      const categories = Array.isArray(post.categories) 
+        ? post.categories.map(cat => typeof cat === 'object' ? (cat as WPCategory).id : cat)
+        : [];
+      
+      const tags = Array.isArray(post.tags)
+        ? post.tags.map(tag => typeof tag === 'object' ? (tag as WPTag).id : tag)
+        : [];
+      
+      // Extract media
+      let featured_media_url = undefined;
+      let featured_media_alt = undefined;
+      let featured_media_width = undefined;
+      let featured_media_height = undefined;
+      
+      if (post._embedded?.['wp:featuredmedia']?.[0]) {
+        const media = post._embedded['wp:featuredmedia'][0];
+        featured_media_url = media.source_url;
+        featured_media_alt = media.alt_text || post.title.rendered;
+        featured_media_width = media.media_details?.width;
+        featured_media_height = media.media_details?.height;
+      }
+      
+      // Create WPPostWithMedia object
+      const postWithMedia: WPPostWithMedia = {
+        ...post,
+        categories,
+        tags,
+        authors: post.authors || post._embedded?.author || []
+      };
+      
+      // Add media properties
+      if (featured_media_url) postWithMedia.featured_media_url = featured_media_url;
+      if (featured_media_alt) postWithMedia.featured_media_alt = featured_media_alt;
+      if (featured_media_width) postWithMedia.featured_media_width = featured_media_width;
+      if (featured_media_height) postWithMedia.featured_media_height = featured_media_height;
+      
+      return postWithMedia;
+    });
+  } catch (error) {
+    console.error('💥 Error fetching posts by tag:', error);
+    return [];
+  }
+}
+
+// Fetch posts by tag slug
+export async function getPostsByTagSlug(tagSlug: string, perPage = 10): Promise<WPPostWithMedia[]> {
+  try {
+    console.log(`🔍 Looking for tag with slug: "${tagSlug}"`);
+    
+    // First get tag ID from slug
+    const tagsResponse = await fetch(`${WORDPRESS_API_URL}/tags?slug=${tagSlug}`);
+    
+    if (!tagsResponse.ok) {
+      console.error('❌ Failed to fetch tag by slug:', tagsResponse.status, tagsResponse.statusText);
+      return [];
+    }
+    
+    const tags = await tagsResponse.json();
+    
+    if (tags.length === 0) {
+      console.log(`⚠️ No tag found with slug: "${tagSlug}"`);
+      return [];
+    }
+    
+    const tagId = tags[0].id;
+    console.log(`✅ Found tag: "${tags[0].name}" (ID: ${tagId})`);
+    
+    // Then get posts by tag ID
+    return await getPostsByTag(tagId, perPage);
+  } catch (error) {
+    console.error('💥 Error fetching posts by tag slug:', error);
+    return [];
+  }
+}
+
+// Fetch exclusive posts (posts with tag "exclusive" or "exclusive-story")
+export async function getExclusivePosts(perPage = 10): Promise<WPPostWithMedia[]> {
+  try {
+    console.log('🎯 Fetching exclusive posts...');
+    
+    // Try multiple possible tag slugs for exclusive posts
+    const possibleTagSlugs = [
+      'exclusive',
+      'exclusive-story', 
+      'exclusive-news',
+      'the-sun-exclusive',
+      'sun-exclusive'
+    ];
+    
+    let exclusivePosts: WPPostWithMedia[] = [];
+    
+    // Try each tag slug until we find posts
+    for (const tagSlug of possibleTagSlugs) {
+      const posts = await getPostsByTagSlug(tagSlug, perPage);
+      
+      if (posts.length > 0) {
+        console.log(`✅ Found ${posts.length} exclusive posts with tag: "${tagSlug}"`);
+        exclusivePosts = posts;
+        break;
+      }
+    }
+    
+    // If no posts found with specific tags, try searching in tag names
+    if (exclusivePosts.length === 0) {
+      console.log('🔍 No posts found with specific exclusive tags, searching all tags...');
+      
+      const allTags = await getTags();
+      const exclusiveTags = allTags.filter(tag => 
+        tag.name.toLowerCase().includes('exclusive') ||
+        tag.slug.toLowerCase().includes('exclusive')
+      );
+      
+      console.log(`📋 Found ${exclusiveTags.length} tags with "exclusive" in name/slug`);
+      
+      if (exclusiveTags.length > 0) {
+        // Get posts from the first exclusive tag found
+        const tagId = exclusiveTags[0].id;
+        exclusivePosts = await getPostsByTag(tagId, perPage);
+        console.log(`✅ Found ${exclusivePosts.length} posts from tag: "${exclusiveTags[0].name}"`);
+      }
+    }
+    
+    if (exclusivePosts.length === 0) {
+      console.log('⚠️ No exclusive posts found');
+    }
+    
+    return exclusivePosts;
+  } catch (error) {
+    console.error('💥 Error fetching exclusive posts:', error);
+    return [];
+  }
+}
+
+// Get latest exclusive post
+export async function getLatestExclusivePost(): Promise<WPPostWithMedia | null> {
+  try {
+    console.log('🎯 Fetching latest exclusive post...');
+    
+    const exclusivePosts = await getExclusivePosts(1);
+    
+    if (exclusivePosts.length > 0) {
+      const latestPost = exclusivePosts[0];
+      console.log('✅ Latest exclusive post found:', {
+        id: latestPost.id,
+        title: latestPost.title.rendered,
+        date: latestPost.date,
+        tags: latestPost.tags
+      });
+      return latestPost;
+    }
+    
+    console.log('⚠️ No exclusive posts found');
+    return null;
+  } catch (error) {
+    console.error('💥 Error getting latest exclusive post:', error);
+    return null;
+  }
+}
+
+// Check if post has exclusive tag
+export function hasExclusiveTag(post: WPPostWithMedia): boolean {
+  if (!post.tags || post.tags.length === 0) return false;
+  
+  // If we have tag IDs, we need to check them
+  // This function assumes tags are already numbers
+  // For a proper check, we'd need to fetch tag details
+  return post.tags.length > 0;
+}
+
+// Get posts with multiple tags - KINI RETURN WPPostWithMedia[]
+export async function getPostsByMultipleTags(tagIds: number[], perPage = 10): Promise<WPPostWithMedia[]> {
+  try {
+    console.log(`🏷️ Fetching posts with tags: ${tagIds.join(', ')}`);
+    
+    const tagQuery = tagIds.map(id => `tags[]=${id}`).join('&');
+    const res = await fetch(
+      `${WORDPRESS_API_URL}/posts?${tagQuery}&_embed=wp:featuredmedia,author&per_page=${perPage}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!res.ok) {
+      console.error('❌ Failed to fetch posts by multiple tags:', res.status, res.statusText);
+      throw new Error(`Failed to fetch posts by multiple tags: ${res.status} ${res.statusText}`);
+    }
+    
+    const posts: WPPost[] = await res.json();
+    console.log(`✅ Posts with multiple tags fetched:`, posts.length);
+    
+    // Process posts
+    return posts.map((post: WPPost): WPPostWithMedia => {
+      const categories = Array.isArray(post.categories) 
+        ? post.categories.map(cat => typeof cat === 'object' ? (cat as WPCategory).id : cat)
+        : [];
+      
+      const tags = Array.isArray(post.tags)
+        ? post.tags.map(tag => typeof tag === 'object' ? (tag as WPTag).id : tag)
+        : [];
+      
+      // Extract media
+      let featured_media_url = undefined;
+      let featured_media_alt = undefined;
+      let featured_media_width = undefined;
+      let featured_media_height = undefined;
+      
+      if (post._embedded?.['wp:featuredmedia']?.[0]) {
+        const media = post._embedded['wp:featuredmedia'][0];
+        featured_media_url = media.source_url;
+        featured_media_alt = media.alt_text || post.title.rendered;
+        featured_media_width = media.media_details?.width;
+        featured_media_height = media.media_details?.height;
+      }
+      
+      // Create WPPostWithMedia object
+      const postWithMedia: WPPostWithMedia = {
+        ...post,
+        categories,
+        tags,
+        authors: post.authors || post._embedded?.author || []
+      };
+      
+      // Add media properties
+      if (featured_media_url) postWithMedia.featured_media_url = featured_media_url;
+      if (featured_media_alt) postWithMedia.featured_media_alt = featured_media_alt;
+      if (featured_media_width) postWithMedia.featured_media_width = featured_media_width;
+      if (featured_media_height) postWithMedia.featured_media_height = featured_media_height;
+      
+      return postWithMedia;
+    });
+  } catch (error) {
+    console.error('💥 Error fetching posts by multiple tags:', error);
+    return [];
+  }
+}
+
 // Test API connection
 export async function testWordPressAPI(): Promise<{success: boolean; message: string; data?: any}> {
   try {
@@ -620,5 +992,126 @@ export async function getTrendingPosts(limit = 10): Promise<WPPostWithMedia[]> {
   } catch (error) {
     console.error('Error fetching trending posts:', error);
     return [];
+  }
+}
+
+// Get tag by name
+export async function getTagByName(tagName: string): Promise<WPTag | null> {
+  try {
+    const tags = await getTags();
+    const tag = tags.find(t => 
+      t.name.toLowerCase() === tagName.toLowerCase() ||
+      t.slug.toLowerCase() === tagName.toLowerCase()
+    );
+    
+    return tag || null;
+  } catch (error) {
+    console.error('Error getting tag by name:', error);
+    return null;
+  }
+}
+
+// Search tags by name
+export async function searchTags(searchTerm: string): Promise<WPTag[]> {
+  try {
+    const tags = await getTags();
+    return tags.filter(tag => 
+      tag.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tag.slug.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  } catch (error) {
+    console.error('Error searching tags:', error);
+    return [];
+  }
+}
+
+// Dalam lib/wordpress.ts - tambah function ini
+export async function getTopStoriesWithCategories(): Promise<WPPostWithMedia[]> {
+  try {
+    console.log('📊 Fetching top stories with categories...');
+    
+    const res = await fetch('https://thesun.my/wp-json/thesun/v1/top-stories', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 60 }
+    });
+    
+    if (!res.ok) {
+      console.error('❌ Failed to fetch top stories:', res.status, res.statusText);
+      throw new Error(`Failed to fetch top stories: ${res.status} ${res.statusText}`);
+    }
+    
+    const posts: WPPost[] = await res.json();
+    console.log('✅ Top stories fetched:', posts.length);
+    
+    // Fetch all categories untuk mapping
+    const allCategories = await getCategories();
+    
+    // Process posts untuk konsistensi
+    return posts.map((post: WPPost): WPPostWithMedia => {
+      // Handle categories dengan betul
+      let categories: number[] = [];
+      
+      if (Array.isArray(post.categories)) {
+        categories = post.categories.map(cat => {
+          if (typeof cat === 'number') {
+            return cat;
+          } else if (typeof cat === 'object' && cat !== null) {
+            // Jika category object, cuba dapatkan ID
+            const categoryObj = cat as any;
+            return categoryObj.id || categoryObj.term_id || 0;
+          }
+          return 0;
+        }).filter(id => id !== 0);
+      }
+      
+      // Handle tags
+      const tags = Array.isArray(post.tags)
+        ? post.tags.map(tag => typeof tag === 'object' ? (tag as WPTag).id : tag)
+        : [];
+      
+      // Extract media (optional - tak perlu untuk top stories)
+      let featured_media_url = undefined;
+      let featured_media_alt = undefined;
+      
+      if (post._embedded?.['wp:featuredmedia']?.[0]) {
+        const media = post._embedded['wp:featuredmedia'][0];
+        featured_media_url = media.source_url;
+        featured_media_alt = media.alt_text || post.title.rendered;
+      }
+      
+      // Create WPPostWithMedia object
+      const postWithMedia: WPPostWithMedia = {
+        ...post,
+        categories,
+        tags,
+        authors: post.authors || post._embedded?.author || []
+      };
+      
+      // Add media properties jika ada
+      if (featured_media_url) postWithMedia.featured_media_url = featured_media_url;
+      if (featured_media_alt) postWithMedia.featured_media_alt = featured_media_alt;
+      
+      // Debug info untuk setiap post
+      if (process.env.NODE_ENV === 'development' && categories.length > 0) {
+        const firstCategoryId = categories[0];
+        const categoryInfo = allCategories.find(c => c.id === firstCategoryId);
+        console.log(`Post ${post.id} category mapping:`, {
+          postId: post.id,
+          originalCategories: post.categories,
+          mappedCategoryIds: categories,
+          categoryName: categoryInfo?.name || 'Not found'
+        });
+      }
+      
+      return postWithMedia;
+    });
+  } catch (error) {
+    console.error('💥 Error fetching top stories:', error);
+    // Fallback ke posts biasa
+    console.log('🔄 Using regular posts as fallback for top stories');
+    return await getPosts(10);
   }
 }

@@ -21,70 +21,96 @@ export default function LatestNews({ posts, categories }: LatestNewsProps) {
     return category ? cleanTextContent(category.name) : 'Uncategorized';
   };
 
+  // Debug: Tunjukkan post yang diterima
+  if (process.env.NODE_ENV === 'development') {
+    console.log('LatestNews - Posts count:', posts.length);
+    console.log('LatestNews - Posts:', posts.map(p => ({
+      id: p.id,
+      title: cleanTextContent(p.title.rendered),
+      date: p.date,
+      categories: p.categories
+    })));
+  }
+
+  // Pastikan kita ada 5 posts terbaru
+  const latestPosts = posts.slice(0, 6);
+
   return (
     <div>
       <h3 className="text-xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-red-600">
         Latest News
       </h3>
       
-      <div className="space-y-6">
-        {posts.map((post, index) => (
-          <div key={post.id} className={`pb-6 ${index < posts.length - 1 ? 'border-b border-gray-200' : ''}`}>
-            {/* Hanya post pertama ada featured image besar */}
-            {index === 0 && post.featured_media_url && (
-              <div className="w-full h-40 mb-3">
-                <img 
-                  src={post.featured_media_url} 
-                  alt={cleanTextContent(post.featured_media_alt || post.title.rendered)}
-                  className="w-full h-full object-cover rounded-lg"
-                />
+      {latestPosts.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No latest news available</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {latestPosts.map((post, index) => (
+            <div key={post.id} className={`pb-6 ${index < latestPosts.length - 1 ? 'border-b border-gray-200' : ''}`}>
+              {/* Hanya post pertama ada featured image besar */}
+              {index === 0 && post.featured_media_url && (
+                <div className="w-full h-40 mb-3">
+                  <img 
+                    src={post.featured_media_url} 
+                    alt={cleanTextContent(post.featured_media_alt || post.title.rendered)}
+                    className="w-full h-full object-cover rounded-lg"
+                    onError={(e) => {
+                      e.currentTarget.src = '/images/news-placeholder.jpg';
+                    }}
+                  />
+                </div>
+              )}
+              
+              {/* Untuk post 2-5, thumbnail kecil */}
+              {index > 0 && post.featured_media_url && (
+                <div className="w-16 h-16 float-left mr-3 mb-2">
+                  <img 
+                    src={post.featured_media_url} 
+                    alt={cleanTextContent(post.featured_media_alt || post.title.rendered)}
+                    className="w-full h-full object-cover rounded"
+                    onError={(e) => {
+                      e.currentTarget.src = '/images/news-placeholder.jpg';
+                    }}
+                  />
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-500 text-xs">
+                  {formatRelativeTime(post.date)}
+                </span>
+                <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
+                  {getPostCategoryName(post, categories)}
+                </span>
               </div>
-            )}
-            
-            {/* Untuk post 2-4, thumbnail kecil */}
-            {index > 0 && post.featured_media_url && (
-              <div className="w-16 h-16 float-left mr-3 mb-2">
-                <img 
-                  src={post.featured_media_url} 
-                  alt={cleanTextContent(post.featured_media_alt || post.title.rendered)}
-                  className="w-full h-full object-cover rounded"
+              
+              <Link href={`/posts/${post.slug}`}>
+                <h4 
+                  className={`font-semibold text-gray-900 hover:text-red-600 transition-colors cursor-pointer ${
+                    index === 0 ? 'text-lg' : 'text-sm'
+                  }`}
+                  dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 
                 />
-              </div>
-            )}
-            
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-500 text-xs">
-                {formatRelativeTime(post.date)}
-              </span>
-              <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
-                {getPostCategoryName(post, categories)}
-              </span>
+              </Link>
+              
+              {index === 0 && (
+                <div 
+                  className="text-gray-600 text-sm mt-2"
+                  dangerouslySetInnerHTML={{ 
+                    __html: getFullParagraphExcerpt(
+                      post.excerpt?.rendered || 
+                      post.content?.rendered?.substring(0, 150) || 
+                      ''
+                    )
+                  }} 
+                />
+              )}
             </div>
-            
-            <Link href={`/posts/${post.slug}`}>
-              <h4 
-                className={`font-semibold text-gray-900 hover:text-red-600 transition-colors cursor-pointer ${
-                  index === 0 ? 'text-lg' : 'text-sm'
-                }`}
-                dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 
-              />
-            </Link>
-            
-            {index === 0 && (
-              <div 
-                className="text-gray-600 text-sm mt-2"
-                dangerouslySetInnerHTML={{ 
-                  __html: getFullParagraphExcerpt(
-                    post.excerpt?.rendered || 
-                    post.content?.rendered?.substring(0, 150) || 
-                    ''
-                  )
-                }} 
-              />
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

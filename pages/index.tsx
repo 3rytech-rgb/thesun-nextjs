@@ -1,12 +1,18 @@
 import { GetStaticProps } from 'next';
-import { getPosts, getCategories, getPostsByCategoryWithChildren } from '../lib/wordpress';
+import { 
+  getPosts, 
+  getCategories, 
+  getPostsByCategoryWithChildren,
+  getLatestExclusivePost,
+  getTags,
+  getTopStories
+} from '../lib/wordpress';
 import { WPPost } from '../types/wordpress';
 import { WPCategory } from '../types/wordpress';
 import Layout from '../components/layout/Layout';
 import FeaturedStory from '../components/home/FeaturedStory';
 import LatestNews from '../components/home/LatestNews';
 import TopStories from '../components/home/TopStories';
-
 import SpecialSection from '../components/home/SpecialSection';
 import BeritaSection from '../components/home/categories/BeritaSection';
 import SportsSection from '../components/home/categories/SportsSection';
@@ -18,6 +24,8 @@ import CombinedSection from '../components/home/categories/CombinedSection';
 interface HomeProps {
   posts: WPPost[];
   categories: WPCategory[];
+  exclusivePost: WPPost | null;
+  topStoriesPosts: WPPost[];
   newsPosts: WPPost[];
   beritaPosts: WPPost[];
   lifestylePosts: WPPost[];
@@ -29,12 +37,14 @@ interface HomeProps {
   prnPosts: WPPost[];
   palestinePosts: WPPost[];
   chinaPosts: WPPost[];
-  spotlightPosts: WPPost[]; // Added this
+  spotlightPosts: WPPost[];
 }
 
 export default function Home({ 
   posts, 
   categories, 
+  exclusivePost, 
+  topStoriesPosts,
   newsPosts, 
   beritaPosts, 
   lifestylePosts, 
@@ -46,40 +56,45 @@ export default function Home({
   prnPosts,
   palestinePosts,
   chinaPosts,
-  spotlightPosts // Added this
+  spotlightPosts
 }: HomeProps) {
-  const featuredPost = posts[0];
-  const latestPosts = posts.slice(1, 5);
-  const topStories = posts.slice(5, 15);
+  const featuredPost = exclusivePost || posts[0];
+  const isExclusive = !!exclusivePost;
 
-  // Special Sections dengan custom design
+  let latestPosts = [];
+  if (isExclusive) {
+    latestPosts = posts.slice(0, 5);
+  } else {
+    latestPosts = posts.slice(1, 6);
+  }
+
+  const topStories = topStoriesPosts.slice(0, 10);
+
   const specialSections = [
     {
       name: 'PRN',
       slug: 'prn',
       tagline: 'Latest updates on State Elections',
-      backgroundColor: '#1e3a8a', // Blue
+      backgroundColor: '#1e3a8a',
       accentColor: '#1e3a8a',
       textColor: '#ffffff',
-      backgroundImage: '/images/thesun.png' // Optional: Add background image
+      backgroundImage: '/images/thesun.png'
     },
     {
       name: 'Palestine',
       slug: 'palestine',
       tagline: 'Standing in solidarity with Palestine',
-      backgroundColor: '#14532d', // Green
+      backgroundColor: '#14532d',
       accentColor: '#22c55e',
       textColor: '#ffffff',
-      // backgroundImage: '/images/palestine-bg.jpg'
     },
     {
       name: 'China',
       slug: 'china',
       tagline: 'China-Malaysia relations and updates',
-      backgroundColor: '#7f1d1d', // Red
+      backgroundColor: '#7f1d1d',
       accentColor: '#ef4444',
       textColor: '#ffffff',
-      // backgroundImage: '/images/china-bg.jpg'
     }
   ];
 
@@ -91,29 +106,49 @@ export default function Home({
 
   return (
     <Layout categories={categories}>
-      <div className="container mx-auto px-4 py-8">
-        {/* Main News Grid */}
-        <div className="grid grid-cols-4 gap-8 mb-12">
-          <div className="col-span-2">
-            <FeaturedStory post={featuredPost} categories={categories} />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Main News Grid - Responsive untuk semua device */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-10 lg:mb-12">
+          {/* Mobile (<640px): 1 kolum, Tablet (640px-1023px): 2 kolum, Desktop (≥1024px): 2 kolum */}
+          <div className="sm:col-span-2">
+            {featuredPost ? (
+              <FeaturedStory 
+                exclusivePost={featuredPost} 
+                categories={categories} 
+                isNewExclusive={isExclusive}
+              />
+            ) : (
+              <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8 text-center">
+                <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-700 mb-2 sm:mb-3 lg:mb-4">
+                  No featured story available
+                </h3>
+                <p className="text-gray-500 text-xs sm:text-sm lg:text-base">
+                  Check back later for the latest news
+                </p>
+              </div>
+            )}
           </div>
-          <div className="col-span-1">
+          
+          {/* Mobile: di bawah Featured Story, Tablet: kolum kedua, Desktop: kolum ketiga */}
+          <div className="sm:col-span-1 mt-4 sm:mt-0">
             <LatestNews posts={latestPosts} categories={categories} />
           </div>
-          <div className="col-span-1">
+          
+          {/* Mobile: di bawah Latest News, Tablet: baris kedua kolum pertama, Desktop: kolum keempat */}
+          <div className="sm:col-span-1 sm:col-start-1 lg:col-start-auto mt-4 sm:mt-6 lg:mt-0">
             <TopStories posts={topStories} categories={categories} />
           </div>
         </div>
 
         {/* LINE BREAK SEBELUM CATEGORY SECTIONS */}
-        <div className="border-t border-gray-300 my-16"></div>
+        <div className="border-t border-gray-300 my-6 sm:my-10 lg:my-16"></div>
 
         <GoingViralSection 
           posts={goingViralPosts} 
           categories={categories} 
         />
         
-        {/* Combined Section (Malaysia, World, Asia) */}
+        {/* Combined Section */}
         <CombinedSection 
           malaysiaPosts={malaysiaPosts}
           worldPosts={worldPosts}
@@ -143,17 +178,17 @@ export default function Home({
         />
 
         {/* LINE BREAK SEBELUM SPECIAL SECTIONS */}
-        <div className="border-t-2 border-dashed border-gray-400 my-20"></div>
+        <div className="border-t-2 border-dashed border-gray-400 my-8 sm:my-12 lg:my-20"></div>
 
         {/* SPECIAL SECTIONS HEADER */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-6 sm:mb-8 lg:mb-12">
+          <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 lg:mb-4">
             Special Coverage
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-600 text-xs sm:text-sm lg:text-lg max-w-2xl mx-auto px-2 sm:px-0">
             In-depth analysis and comprehensive coverage on important topics
           </p>
-          <div className="w-48 h-1 bg-gradient-to-r from-red-600 via-blue-600 to-green-600 mx-auto mt-6 rounded-full"></div>
+          <div className="w-24 sm:w-32 lg:w-48 h-1 bg-gradient-to-r from-red-600 via-blue-600 to-green-600 mx-auto mt-3 sm:mt-4 lg:mt-6 rounded-full"></div>
         </div>
 
         {/* Special Sections */}
@@ -165,7 +200,7 @@ export default function Home({
             <SpecialSection
               key={section.slug}
               section={section}
-              posts={posts.slice(1)} // All except featured
+              posts={posts.slice(1)}
               categories={categories}
               featuredPost={posts[0]}
             />
@@ -178,10 +213,54 @@ export default function Home({
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    const [posts, categories] = await Promise.all([
-      getPosts(),
-      getCategories()
+    const [
+      posts, 
+      categories, 
+      exclusivePost,
+      topStoriesPosts,
+      tags
+    ] = await Promise.all([
+      getPosts(30),
+      getCategories(),
+      getLatestExclusivePost(),
+      getTopStories(),
+      getTags()
     ]);
+
+    // Debug log untuk top stories
+    console.log('Top stories fetched:', {
+      count: topStoriesPosts.length,
+      posts: topStoriesPosts.slice(0, 3).map(p => ({
+        id: p.id,
+        title: p.title.rendered,
+        date: p.date
+      }))
+    });
+
+    // Debug log untuk tags
+    console.log('Tags available:', tags.map(tag => ({ 
+      name: tag.name, 
+      slug: tag.slug, 
+      id: tag.id 
+    })).slice(0, 10));
+
+    // Debug log untuk exclusive post
+    console.log('Exclusive post fetched:', exclusivePost ? {
+      id: exclusivePost.id,
+      title: exclusivePost.title.rendered,
+      tags: exclusivePost.tags,
+      date: exclusivePost.date
+    } : 'No exclusive post found');
+
+    // Debug log untuk regular posts
+    console.log('Regular posts fetched:', posts.length);
+    if (posts.length > 0) {
+      console.log('First regular post:', {
+        id: posts[0].id,
+        title: posts[0].title.rendered,
+        date: posts[0].date
+      });
+    }
 
     // Helper function untuk cari category ID dari name
     const getCategoryIdByName = (categoryName: string): number => {
@@ -193,7 +272,6 @@ export const getStaticProps: GetStaticProps = async () => {
 
     // Helper function untuk cari category ID dari slug atau tag
     const getCategoryIdBySlugOrTag = (searchTerm: string): number => {
-      // Cari dalam categories
       const category = categories.find(cat => 
         cat.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
         cat.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -201,45 +279,35 @@ export const getStaticProps: GetStaticProps = async () => {
       return category?.id || 0;
     };
 
-    // Dapatkan category IDs untuk semua sections
+    // Dapatkan category IDs
     const categoryIds = {
       news: getCategoryIdByName('news'),
       berita: getCategoryIdByName('berita'),
       lifestyle: getCategoryIdByName('lifestyle'),
       goingViral: getCategoryIdByName('going viral'),
       sports: getCategoryIdByName('sports'),
-      // Malaysia, World, Asia sections
       malaysia: getCategoryIdBySlugOrTag('malaysia'),
       world: getCategoryIdBySlugOrTag('world'),
       asia: getCategoryIdBySlugOrTag('asia'),
-      // Special sections - cari berdasarkan slug atau tag
       prn: getCategoryIdBySlugOrTag('prn') || getCategoryIdBySlugOrTag('pilihan raya'),
       palestine: getCategoryIdBySlugOrTag('palestine') || getCategoryIdBySlugOrTag('gaza'),
       china: getCategoryIdBySlugOrTag('china') || getCategoryIdBySlugOrTag('beijing'),
-      // Spotlight section
       spotlight: getCategoryIdByName('spotlight') || getCategoryIdBySlugOrTag('spotlight')
     };
 
     // Fetch posts untuk semua sections
     const allPosts = await Promise.all([
-      // Regular categories (Index 0-4)
       categoryIds.news ? getPostsByCategoryWithChildren(categoryIds.news) : Promise.resolve([]),
       categoryIds.berita ? getPostsByCategoryWithChildren(categoryIds.berita) : Promise.resolve([]),
       categoryIds.lifestyle ? getPostsByCategoryWithChildren(categoryIds.lifestyle) : Promise.resolve([]),
       categoryIds.goingViral ? getPostsByCategoryWithChildren(categoryIds.goingViral) : Promise.resolve([]),
       categoryIds.sports ? getPostsByCategoryWithChildren(categoryIds.sports) : Promise.resolve([]),
-      
-      // Malaysia, World, Asia sections (Index 5-7)
       categoryIds.malaysia ? getPostsByCategoryWithChildren(categoryIds.malaysia) : Promise.resolve([]),
       categoryIds.world ? getPostsByCategoryWithChildren(categoryIds.world) : Promise.resolve([]),
       categoryIds.asia ? getPostsByCategoryWithChildren(categoryIds.asia) : Promise.resolve([]),
-      
-      // Special sections (Index 8-10)
       categoryIds.prn ? getPostsByCategoryWithChildren(categoryIds.prn) : Promise.resolve([]),
       categoryIds.palestine ? getPostsByCategoryWithChildren(categoryIds.palestine) : Promise.resolve([]),
       categoryIds.china ? getPostsByCategoryWithChildren(categoryIds.china) : Promise.resolve([]),
-      
-      // Spotlight section (Index 11)
       categoryIds.spotlight ? getPostsByCategoryWithChildren(categoryIds.spotlight) : Promise.resolve([])
     ]);
 
@@ -262,6 +330,8 @@ export const getStaticProps: GetStaticProps = async () => {
       props: { 
         posts: posts || [],
         categories: categories || [],
+        exclusivePost: exclusivePost || null,
+        topStoriesPosts: topStoriesPosts || [],
         newsPosts: allPosts[0] || [],
         beritaPosts: allPosts[1] || [],
         lifestylePosts: allPosts[2] || [],
@@ -273,7 +343,7 @@ export const getStaticProps: GetStaticProps = async () => {
         prnPosts: allPosts[8] || [],
         palestinePosts: allPosts[9] || [],
         chinaPosts: allPosts[10] || [],
-        spotlightPosts: allPosts[11] || [] // Added this
+        spotlightPosts: allPosts[11] || []
       },
       revalidate: 60,
     };
@@ -283,6 +353,8 @@ export const getStaticProps: GetStaticProps = async () => {
       props: { 
         posts: [],
         categories: [],
+        exclusivePost: null,
+        topStoriesPosts: [],
         newsPosts: [],
         beritaPosts: [],
         lifestylePosts: [],
@@ -294,7 +366,7 @@ export const getStaticProps: GetStaticProps = async () => {
         prnPosts: [],
         palestinePosts: [],
         chinaPosts: [],
-        spotlightPosts: [] // Added this
+        spotlightPosts: []
       },
       revalidate: 60,
     };
