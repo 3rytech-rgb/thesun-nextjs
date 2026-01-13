@@ -3,6 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { IncomingForm, Files, Fields } from 'formidable';
 import { PDFData } from '@/types/ipaper';
+import { storageManager } from '@/lib/storage';
+import { StorageType } from '@/types/storage';
+import { validateSambaConfig } from '@/lib/samba-config';
 
 export const config = {
   api: {
@@ -59,10 +62,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get form data with type safety
     const date = getStringValue(fields.date) || new Date().toISOString().split('T')[0];
     const title = getStringValue(fields.title) || `theSun Edition - ${date}`;
+    const storageType = (getStringValue(fields.storage) || 'local') as StorageType;
     const pdfFile = files.pdf as any;
 
     if (!pdfFile) {
       return res.status(400).json({ success: false, message: 'No PDF file provided' });
+    }
+
+    // Validate storage type
+    if (storageType === 'samba' && !validateSambaConfig()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Samba storage is not configured. Please check environment variables.' 
+      });
+    }
+
+    const availableStorageTypes = storageManager.getAvailableTypes();
+    if (!availableStorageTypes.includes(storageType)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Storage type '${storageType}' is not available. Available types: ${availableStorageTypes.join(', ')}` 
+      });
     }
 
     // Debug info
@@ -111,12 +131,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ success: false, message: 'File size must be less than 50MB' });
     }
 
-    // Create uploads directory if doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'ipaper');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
     // Parse date and create directory structure
     let year = new Date().getFullYear().toString();
     let month = String(new Date().getMonth() + 1).padStart(2, '0');
@@ -131,29 +145,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.warn('Invalid date format, using current date');
     }
 
-    // Create year/month directories
-    const yearDir = path.join(uploadsDir, year);
-    const monthDir = path.join(yearDir, month);
-    
-    if (!fs.existsSync(yearDir)) fs.mkdirSync(yearDir, { recursive: true });
-    if (!fs.existsSync(monthDir)) fs.mkdirSync(monthDir, { recursive: true });
-
-    // Generate unique filename
+    // Create directory path and unique filename
+    const dirPath = `ipaper/${year}/${month}`;
     const originalName = pdfFile.originalFilename || `thesun-${date}.pdf`;
     const safeName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_');
     const fileNameFinal = `thesun-${date}-${Date.now()}-${safeName}`;
-    const filePath = path.join(monthDir, fileNameFinal);
 
-    // Move file from temp location to permanent location
-    await fs.promises.rename(pdfFile.filepath, filePath);
+    // Read file buffer
+    const fileBuffer = await fs.promises.readFile(pdfFile.filepath);
 
-    // Get file stats
-    const stats = await fs.promises.stat(filePath);
-    const fileSize = (stats.size / (1024 * 1024)).toFixed(2); // MB
+    // Upload using storage manager
+    const uploadResult = await storageManager.upload(fileBuffer, dirPath, fileNameFinal, storageType);
 
-    // Relative URL untuk access file
-    const relativePath = filePath.replace(path.join(process.cwd(), 'public'), '');
-    const fileUrl = relativePath.replace(/\\/g, '/'); // Convert backslashes to forward slashes
+    if (!uploadResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: `Upload failed: ${uploadResult.error}`,
+      });
+    }
+
+    // Calculate file size
+    const fileSize = (pdfFile.size / (1024 * 1024)).toFixed(2); // MB
+
+    // Create file URL based on storage type
+    let fileUrl: string;
+    if (storageType === 'local') {
+      // For local storage, create relative URL from public directory
+      const publicPath = path.join(process.cwd(), 'public');
+      const fullPath = path.join(publicPath, uploadResult.path!);
+      const relativePath = fullPath.replace(publicPath, '');
+      fileUrl = relativePath.replace(/\\/g, '/');
+    } else {
+      // For Samba storage, use the path as is (you might want to add a download endpoint)
+      fileUrl = `/api/samba/download?path=${encodeURIComponent(uploadResult.path!)}`;
+    }
 
     // Create PDF metadata
     const pdfData: PDFData = {
@@ -164,9 +189,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       pages: 24, // Default, bisa extract dari PDF nanti
       size: `${fileSize} MB`,
       uploaded: new Date().toISOString(),
+      storage: storageType, // Add storage type to metadata
+      path: uploadResult.path, // Add storage path to metadata
     };
 
-    // Save metadata to JSON file (simulate database)
+    // Save metadata to JSON file (simulate database) - always use local for metadata
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'ipaper');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
     const metadataPath = path.join(uploadsDir, 'metadata.json');
     let metadata: PDFData[] = [];
     
@@ -186,9 +217,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('PDF uploaded successfully:', {
       fileName: fileNameFinal,
-      filePath,
+      path: uploadResult.path,
       fileUrl,
       size: pdfData.size,
+      storage: storageType,
       validation: {
         extension: hasPdfExtension,
         mimeType: hasValidMimeType,

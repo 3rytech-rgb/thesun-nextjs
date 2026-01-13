@@ -154,11 +154,6 @@ export default function CategoryPage({
                         className="bg-slate-50 border border-slate-300 rounded-xl px-5 py-3 text-sm font-medium text-slate-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md"
                       >
                         {cleanHtmlContent(siblingCat.name)}
-                        <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
-                          siblingCat.count > 0 ? 'bg-slate-200 text-slate-600' : 'bg-slate-100 text-slate-400'
-                        }`}>
-                          {siblingCat.count}
-                        </span>
                       </Link>
                     ))}
                   </>
@@ -172,11 +167,6 @@ export default function CategoryPage({
                     className="bg-slate-50 border border-slate-300 rounded-xl px-5 py-3 text-sm font-medium text-slate-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md"
                   >
                     {cleanHtmlContent(subCat.name)}
-                    <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
-                      subCat.count > 0 ? 'bg-slate-200 text-slate-600' : 'bg-slate-100 text-slate-400'
-                    }`}>
-                      {subCat.count}
-                    </span>
                   </Link>
                 ))}
               </div>
@@ -198,7 +188,7 @@ export default function CategoryPage({
                 {mainFeaturedPost ? (
                   <article className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300">
                     {mainFeaturedPost.featured_media_url && (
-                      <div className="featured-image-container h-64 relative">
+                      <div className="featured-image-container h-64 md:h-80 relative">
                         <NetworkImage
                           src={mainFeaturedPost.featured_media_url}
                           alt={mainFeaturedPost.featured_media_alt || cleanHtmlContent(mainFeaturedPost.title.rendered)}
@@ -210,24 +200,24 @@ export default function CategoryPage({
                     )}
                     
                     <div className="p-6">
-                      <div className="flex items-center mb-4">
+                      <div className="flex flex-wrap items-center mb-4 gap-2">
                         <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold tracking-wide">
                           {cleanHtmlContent(category.name.toUpperCase())}
                         </span>
-                        <span className="text-slate-500 text-sm ml-4">
+                        <span className="text-slate-500 text-sm">
                           {formatDate(mainFeaturedPost.date)}
                         </span>
                       </div>
                       
                       <Link href={`/posts/${mainFeaturedPost.slug}`}>
-                        <h3 className="text-2xl font-bold text-slate-900 mb-4 leading-tight cursor-pointer hover:text-red-600 transition-colors duration-300"
+                        <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 leading-tight cursor-pointer hover:text-red-600 transition-colors duration-300"
                             dangerouslySetInnerHTML={{ 
                               __html: cleanHtmlContent(mainFeaturedPost.title.rendered) 
                             }} />
                       </Link>
                       
                       <div 
-                        className="text-slate-600 leading-relaxed mb-6"
+                        className="text-slate-600 leading-relaxed mb-6 text-sm md:text-base"
                         dangerouslySetInnerHTML={{ 
                           __html: cleanHtmlContent(
                             mainFeaturedPost.excerpt?.rendered?.length > 200 
@@ -239,7 +229,7 @@ export default function CategoryPage({
                       
                       <Link 
                         href={`/posts/${mainFeaturedPost.slug}`}
-                        className="inline-flex items-center bg-slate-900 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300"
+                        className="inline-flex items-center bg-slate-900 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 text-sm md:text-base"
                       >
                         Read Full Story
                         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,11 +263,11 @@ export default function CategoryPage({
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center mb-2">
+                          <div className="flex flex-wrap items-center mb-2 gap-2">
                             <span className="bg-slate-600 text-white px-2 py-1 rounded text-xs font-medium">
                               {cleanHtmlContent(category.name)}
                             </span>
-                            <span className="text-slate-500 text-xs ml-2">
+                            <span className="text-slate-500 text-xs">
                               {formatDate(post.date)}
                             </span>
                           </div>
@@ -324,7 +314,7 @@ export default function CategoryPage({
             
             {moreStories.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {moreStories.map((post) => (
                     <article key={post.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300">
                       {post.featured_media_url && (
@@ -335,18 +325,18 @@ export default function CategoryPage({
                               alt={post.featured_media_alt || cleanHtmlContent(post.title.rendered)}
                               fill
                               className="object-cover hover:scale-105 transition-transform duration-500"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             />
                           </div>
                         </Link>
                       )}
                       
                       <div className="p-5">
-                        <div className="flex items-center mb-3">
+                        <div className="flex flex-wrap items-center mb-3 gap-2">
                           <span className="bg-red-600 text-white px-2 py-1 rounded text-xs font-medium">
                             {cleanHtmlContent(category.name)}
                           </span>
-                          <span className="text-slate-500 text-xs ml-2">
+                          <span className="text-slate-500 text-xs">
                             {formatDate(post.date)}
                           </span>
                         </div>
@@ -380,18 +370,15 @@ export default function CategoryPage({
                   ))}
                 </div>
 
-                {/* Load More Button */}
+                {/* Load More Button - FIXED RESPONSIVE: SELALU DI BAWAH */}
                 {hasMorePosts && (
-                  <div className="text-center mt-12">
+                  <div className="mt-12 text-center">
                     <button
                       onClick={handleLoadMore}
-                      className="bg-white border border-slate-300 hover:border-red-500 text-slate-700 hover:text-red-600 font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md"
+                      className="w-full max-w-[300px] mx-auto bg-white border border-slate-300 hover:border-red-500 text-slate-700 hover:text-red-600 font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md"
                     >
                       Load More Stories
                     </button>
-                    <p className="text-slate-500 text-sm mt-3">
-                      Discover more amazing content below
-                    </p>
                   </div>
                 )}
               </>
@@ -433,6 +420,16 @@ export default function CategoryPage({
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+        }
+        
+        /* Responsive breakpoints */
+        @media (max-width: 640px) {
+          .category-header h1 {
+            font-size: 2.25rem;
+          }
+          .category-header p {
+            font-size: 1rem;
+          }
         }
       `}</style>
     </Layout>

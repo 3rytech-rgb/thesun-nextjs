@@ -2,7 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import Header from './Header/';
 import Footer from './Footer';
-import { WPCategory } from '../../lib/wordpress';
+import { WPCategory } from '../../types/wordpress';
 
 interface LayoutProps {
   children: React.ReactNode;

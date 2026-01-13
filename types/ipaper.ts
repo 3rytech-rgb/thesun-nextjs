@@ -9,6 +9,8 @@ export interface PDFData {
   size: string;
   uploaded: string;
   isToday?: boolean;
+  storage?: 'local' | 'samba';
+  path?: string;
 }
 
 export interface PageInfo {

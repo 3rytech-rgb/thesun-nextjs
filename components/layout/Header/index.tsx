@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import BreakingNews from './BreakingNews';
@@ -9,35 +11,6 @@ import type { WPCategory } from '../../../types/wordpress';
 
 interface HeaderProps {
   categories?: WPCategory[];
-}
-
-// Helper function untuk dapatkan WordPress API URL secara dynamic
-function getWordPressApiUrl(): string {
-  if (typeof window !== 'undefined') {
-    const protocol = window.location.protocol;
-    const host = window.location.hostname;
-    const port = window.location.port;
-    
-    if (host.startsWith('190.254')) {
-      return `${protocol}//${host}/wp-json`;
-    }
-    
-    if (host === 'localhost' || host === '127.0.0.1') {
-      return 'http://sunmedia-local.local/wp-json';
-    }
-  }
-  
-  return process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/wp/v2', '') || 'http://sunmedia-local.local/wp-json';
-}
-
-// Helper function untuk generate slug dari title
-function generateSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
 }
 
 export default function Header({ categories = [] }: HeaderProps) {
@@ -55,131 +28,149 @@ export default function Header({ categories = [] }: HeaderProps) {
   const cleanCategories = categories
     .map(cat => ({
       ...cat,
-      name: cat.name
-        .replace(/&amp;/g, '&')
-        .replace(/&#8217;/g, "'")
-        .replace(/&#038;/g, '&')
-        .replace(/&#8211;/g, '-')
-        .replace(/&#8212;/g, '--')
-        .replace(/&#8230;/g, '...')
-        .replace(/&[#\w]+;/g, '')
-        .trim()
+      name: cleanHtmlContent(cat.name)
     }))
     .filter(cat => cat.name.toLowerCase() !== 'uncategorized');
 
- // GANTIKAN SELURUH fungsi fetchBreakingNews dalam useEffect dengan ini:
-const fetchBreakingNews = async () => {
-  try {
-    setIsLoading(true);
-    
-    // GUNA INI SAHAJA - lebih simple dan efektif
-    const apiUrl = 'https://thesun.my/wp-json';
-    
-    console.log('🌐 [FETCH] API URL:', apiUrl);
-    
-    // Fetch dengan timeout dan signal
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-    
-    // Request TIDAK PERLU category details sekarang
-    const response = await fetch(
-      `${apiUrl}/wp/v2/posts?per_page=5&_fields=id,title,slug,link,_embedded&_embed=wp:term`,
-      {
-        signal: controller.signal,
-        mode: 'cors', // Explicitly request CORS
-        credentials: 'omit', // No cookies needed
-      }
-    );
-    
-    clearTimeout(timeoutId);
-    
-    console.log('🌐 [FETCH] Status:', response.status, response.statusText);
-    
-    if (!response.ok) {
-      // Check untuk CORS error
-      if (response.status === 0) {
-        throw new Error('CORS error or network issue. Check browser console.');
-      }
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const posts = await response.json();
-    console.log('✅ [FETCH] Posts received:', posts.length);
-    console.log('📄 [FETCH] First post sample:', posts[0]);
-    
-    if (posts && posts.length > 0) {
-      // Process posts dengan cara yang lebih efisien
-      const newsItems: BreakingNewsType[] = posts.map((post: any) => {
-        // Dapatkan category dari _embedded jika ada
-        let categoryName = 'News';
-        if (post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0]) {
-          const firstCategory = post._embedded['wp:term'][0][0];
-          if (firstCategory && firstCategory.name) {
-            categoryName = firstCategory.name;
-          }
+  // Helper function untuk clean HTML
+  function cleanHtmlContent(html: string): string {
+    if (!html) return '';
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/&amp;/g, '&')
+      .replace(/&#8217;/g, "'")
+      .replace(/&#038;/g, '&')
+      .replace(/&[#\w]+;/g, '')
+      .trim();
+  }
+
+  // SIMPLE FETCH BREAKING NEWS - DIPERBAIKI UNTUK ROUTING YANG BETUL
+  const fetchBreakingNews = async () => {
+    try {
+      setIsLoading(true);
+      
+      // URL API
+      const apiUrl = 'https://thesun.my/wp-json/wp/v2/posts';
+      
+      console.log('📡 Fetching breaking news from:', apiUrl);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      // Fetch data dari WordPress API
+      const response = await fetch(
+        `${apiUrl}?per_page=10&_embed=wp:term`,
+        {
+          signal: controller.signal,
+          cache: 'no-cache'
         }
+      );
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const posts = await response.json();
+      console.log('✅ Received posts:', posts?.length || 0);
+      
+      // Transform data ke format breaking news DENGAN LINK YANG BETUL
+      const newsItems: BreakingNewsType[] = posts.map((post: any) => {
+        // Dapatkan kategori
+        let category = 'News';
+        if (post._embedded?.['wp:term']?.[0]?.[0]?.name) {
+          category = post._embedded['wp:term'][0][0].name;
+        }
+        
+        // PENTING: Generate link yang match dengan pages/posts/[slug].tsx
+        // WordPress biasanya ada format: https://thesun.my/some-slug/
+        // Kita perlu convert ke: /posts/some-slug
+        let postLink = '';
+        
+        if (post.slug) {
+          // Format: /posts/[slug] - INI YANG MATCH DENGAN pages/posts/[slug].tsx
+          postLink = `/posts/${post.slug}`;
+        } else if (post.link) {
+          // Jika ada WordPress link, extract slug dari link tersebut
+          const url = new URL(post.link);
+          const slugFromLink = url.pathname.split('/').filter(Boolean).pop();
+          postLink = `/posts/${slugFromLink || post.id}`;
+        } else {
+          // Fallback ke ID
+          postLink = `/posts/${post.id}`;
+        }
+        
+        console.log('📝 Post:', {
+          id: post.id,
+          slug: post.slug,
+          link: postLink,
+          title: post.title?.rendered?.substring(0, 30)
+        });
         
         return {
           id: post.id,
-          title: cleanHtmlContent(post.title.rendered || post.title),
+          title: cleanHtmlContent(post.title?.rendered || 'No title'),
           slug: post.slug,
-          link: post.link || `/posts/${post.slug || post.id}`,
-          category: categoryName
+          link: postLink, // PENTING: Link yang betul untuk routing
+          category: category
         };
       });
       
-      console.log('✅ [FETCH] Processed news items:', newsItems);
+      console.log('✅ Processed news items:', newsItems.length);
+      console.log('🔗 First item link:', newsItems[0]?.link);
       setBreakingNews(newsItems);
-    } else {
-      console.warn('⚠️ No posts returned from API');
-      throw new Error('API returned empty posts array');
+      
+    } catch (error) {
+      console.error('❌ Error fetching breaking news:', error);
+      
+      // FALLBACK DATA dengan link yang betul
+      const fallbackNews: BreakingNewsType[] = [
+        { 
+          id: 1, 
+          title: "PM Anwar umum cadangan kenaikan gaji minimum", 
+          slug: "pm-anwar-umum-cadangan-kenaikan-gaji-minimum",
+          link: "/posts/pm-anwar-umum-cadangan-kenaikan-gaji-minimum", // Format betul
+          category: "Politik"
+        },
+        { 
+          id: 2, 
+          title: "Harga petrol, diesel turun mulai esok", 
+          slug: "harga-petrol-diesel-turun-mulai-esok",
+          link: "/posts/harga-petrol-diesel-turun-mulai-esok", // Format betul
+          category: "Ekonomi"
+        },
+        { 
+          id: 3, 
+          title: "Malaysia tuan rumah Piala Asia 2027", 
+          slug: "malaysia-tuan-rumah-piala-asia-2027",
+          link: "/posts/malaysia-tuan-rumah-piala-asia-2027", // Format betul
+          category: "Sukan"
+        },
+        { 
+          id: 4, 
+          title: "Pendakian Gunung Kinabalu dibuka semula", 
+          slug: "pendakian-gunung-kinabalu-dibuka-semula",
+          link: "/posts/pendakian-gunung-kinabalu-dibuka-semula", // Format betul
+          category: "Pelancongan"
+        },
+        { 
+          id: 5, 
+          title: "AI ubah landskap pendidikan tinggi", 
+          slug: "ai-ubah-landskap-pendidikan-tinggi",
+          link: "/posts/ai-ubah-landskap-pendidikan-tinggi", // Format betul
+          category: "Pendidikan"
+        }
+      ];
+      
+      console.log('⚠️ Using fallback data');
+      setBreakingNews(fallbackNews);
+      
+    } finally {
+      setIsLoading(false);
+      console.log('🏁 Loading state set to false');
     }
-    
-  } catch (error) {
-    console.error('❌ [FETCH ERROR] Details:', error);
-    
-    // Fallback data untuk development
-    const fallbackNews: BreakingNewsType[] = [
-      { 
-        id: 1, 
-        title: "Breaking News: TheSun.my Website Updates", 
-        slug: "website-updates",
-        link: "/posts/website-updates",
-        category: "Announcement"
-      },
-      { 
-        id: 2, 
-        title: "Latest Stories from The Sun Malaysia", 
-        slug: "latest-stories",
-        link: "/posts/latest-stories",
-        category: "News"
-      },
-      { 
-        id: 3, 
-        title: "Stay Tuned for More Updates", 
-        slug: "stay-tuned",
-        link: "/posts/stay-tuned",
-        category: "Updates"
-      }
-    ];
-    
-    setBreakingNews(fallbackNews);
-    
-  } finally {
-    setIsLoading(false);
-  }
-};
-// Helper function untuk clean HTML
-function cleanHtmlContent(html: string): string {
-  if (!html) return '';
-  return html
-    .replace(/<[^>]*>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&#8217;/g, "'")
-    .replace(/&#038;/g, '&')
-    .replace(/&[#\w]+;/g, '')
-    .trim();
-}
+  };
 
   // Auto update date and time
   useEffect(() => {
@@ -207,6 +198,21 @@ function cleanHtmlContent(html: string): string {
     const interval = setInterval(updateDateTime, 60000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Fetch breaking news pada mount
+  useEffect(() => {
+    console.log('🚀 Header mounted, fetching breaking news...');
+    console.log('📍 Current route structure expects: /posts/[slug]');
+    fetchBreakingNews();
+    
+    // Refresh setiap 5 minit
+    const refreshInterval = setInterval(fetchBreakingNews, 5 * 60 * 1000);
+    
+    return () => {
+      console.log('🧹 Cleaning up header');
+      clearInterval(refreshInterval);
+    };
   }, []);
 
   // Close dropdown when clicking outside
@@ -350,14 +356,6 @@ function cleanHtmlContent(html: string): string {
 
   const handleBreakingNewsHover = (hovering: boolean) => {
     setIsPaused(hovering);
-    
-    if (marqueeRef.current) {
-      if (hovering) {
-        marqueeRef.current.style.animationPlayState = 'paused';
-      } else {
-        marqueeRef.current.style.animationPlayState = 'running';
-      }
-    }
   };
 
   // Snowflake Component
@@ -392,6 +390,8 @@ function cleanHtmlContent(html: string): string {
       
       {/* Main Header Content */}
       <div className="relative z-20">
+       
+        
         <BreakingNews
           breakingNews={breakingNews}
           isLoading={isLoading}
@@ -475,20 +475,6 @@ function cleanHtmlContent(html: string): string {
       />
 
       <style jsx>{`
-        @keyframes marquee {
-          0% {
-            transform: translateX(100%);
-          }
-          100% {
-            transform: translateX(-100%);
-          }
-        }
-        
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
-          animation-play-state: running;
-        }
-
         @keyframes fall {
           0% {
             transform: translateY(-10px) rotate(0deg);
@@ -503,12 +489,6 @@ function cleanHtmlContent(html: string): string {
           100% {
             transform: translateY(100vh) rotate(360deg);
             opacity: 0;
-          }
-        }
-        
-        @media (max-width: 768px) {
-          .animate-marquee {
-            animation-duration: 20s;
           }
         }
       `}</style>

@@ -97,54 +97,66 @@ export default function DesktopCanvasModal({
 
   return (
     <div className={`
-      fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
-      w-[96vw] max-w-7xl h-[88vh] max-h-[800px]
-      bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl z-50
+      fixed inset-0 z-50
       transition-all duration-500 ease-out
-      hidden lg:block
-      ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}
-      border border-slate-600/50 backdrop-blur-lg
+      hidden lg:flex items-center justify-center
+      ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+      bg-black/50 backdrop-blur-sm
     `}>
-      <div className="flex items-center justify-between p-8 border-b border-slate-600/50 bg-gradient-to-r from-slate-800 to-slate-900 rounded-t-3xl">
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-1">Browse Categories</h2>
-          <p className="text-slate-400 text-sm">Explore all content categories</p>
-        </div>
-        <button
-          onClick={onClose}
-          className="p-3 rounded-full hover:bg-slate-700/50 transition-all duration-300 hover:scale-110 hover:shadow-lg"
-          aria-label="Close menu"
-        >
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <div className="p-8 h-[calc(100%-96px)] overflow-y-auto">
-        <div className="mb-10">
-          <h3 className="text-lg font-semibold text-slate-300 mb-6 pb-2 border-b border-slate-600/30">Popular Categories</h3>
-          <div className="grid grid-cols-5 gap-6">
-            {canvasCategories.row1.map((item, index) => (
-              <CategoryColumn 
-                key={item.id}
-                category={item}
-                animationDelay={index * 100}
-              />
-            ))}
+      {/* Canvas Modal Container */}
+      <div className={`
+        w-[96vw] max-w-7xl h-[88vh] max-h-[800px]
+        bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl
+        transform transition-all duration-500
+        ${isOpen ? 'scale-100' : 'scale-95'}
+        border border-slate-600/50 backdrop-blur-lg
+        overflow-hidden
+      `}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-8 border-b border-slate-600/50 bg-gradient-to-r from-slate-800 to-slate-900 rounded-t-3xl">
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-1">Browse Categories</h2>
+            <p className="text-slate-400 text-sm">Explore all content categories</p>
           </div>
+          <button
+            onClick={onClose}
+            className="p-3 rounded-full hover:bg-slate-700/50 transition-all duration-300 hover:scale-110 hover:shadow-lg"
+            aria-label="Close menu"
+          >
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        <div>
-          <h3 className="text-lg font-semibold text-slate-300 mb-6 pb-2 border-b border-slate-600/30">More Categories</h3>
-          <div className="grid grid-cols-5 gap-6">
-            {canvasCategories.row2.map((item, index) => (
-              <CategoryColumn 
-                key={item.id}
-                category={item}
-                animationDelay={(canvasCategories.row1.length * 100) + (index * 100)}
-              />
-            ))}
+        {/* Scrollable Content Area */}
+        <div className="p-8 h-[calc(100%-96px)] overflow-y-auto">
+          {/* Popular Categories Section */}
+          <div className="mb-10">
+            <h3 className="text-lg font-semibold text-slate-300 mb-6 pb-2 border-b border-slate-600/30">Popular Categories</h3>
+            <div className="grid grid-cols-5 gap-6">
+              {canvasCategories.row1.map((item, index) => (
+                <CategoryColumn 
+                  key={item.id}
+                  category={item}
+                  animationDelay={index * 100}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* More Categories Section */}
+          <div>
+            <h3 className="text-lg font-semibold text-slate-300 mb-6 pb-2 border-b border-slate-600/30">More Categories</h3>
+            <div className="grid grid-cols-5 gap-6">
+              {canvasCategories.row2.map((item, index) => (
+                <CategoryColumn 
+                  key={item.id}
+                  category={item}
+                  animationDelay={(canvasCategories.row1.length * 100) + (index * 100)}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>

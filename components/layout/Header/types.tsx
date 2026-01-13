@@ -86,6 +86,7 @@ export interface BreakingNews {
   id: number;
   title: string;
   link: string;
+  slug: string; // ✅ Tambahkan ini
   category?: string;
 }
 

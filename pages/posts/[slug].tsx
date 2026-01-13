@@ -1,4 +1,4 @@
-// pages/posts/[slug].tsx - PERBAIKI DENGAN TYPE ANNOTATIONS
+// pages/posts/[slug].tsx - FIXED WITH TYPE ANNOTATIONS
 import { GetStaticProps, GetStaticPaths } from 'next';
 import { 
   getPosts, 
@@ -45,7 +45,7 @@ function formatDate(dateString: string): string {
   }
 }
 
-// Helper function untuk extract author (ambil yang pertama sahaja)
+// Helper function untuk extract author
 function getAuthor(post: WPPostWithMedia): string {
   if (post.authors && post.authors.length > 0) {
     return post.authors[0].display_name;
@@ -90,7 +90,6 @@ const LatestStories = ({ posts }: { posts: WPPostWithMedia[] }) => {
       <div className="space-y-6">
         {posts.slice(0, 5).map((post, index) => (
           <div key={post.id} className="flex gap-4 pb-6 border-b border-gray-200 last:border-b-0">
-            {/* Thumbnail */}
             <div className="flex-shrink-0 w-24 h-20">
               {post.featured_media_url ? (
                 <NetworkImage
@@ -107,7 +106,6 @@ const LatestStories = ({ posts }: { posts: WPPostWithMedia[] }) => {
               )}
             </div>
             
-            {/* Content */}
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-2 line-clamp-2 hover:text-red-600 transition-colors">
                 <Link href={`/posts/${post.slug}`}>
@@ -165,7 +163,7 @@ const PopularCategories = ({ categories }: { categories: WPCategory[] }) => {
   );
 };
 
-// Component untuk More Stories (Full Width Section dengan Load More)
+// Component untuk More Stories (Full Width Section dengan Load More - FIXED RESPONSIVE)
 const MoreStoriesSection = ({ initialPosts, currentPostId }: { 
   initialPosts: WPPostWithMedia[], 
   currentPostId: number 
@@ -208,30 +206,11 @@ const MoreStoriesSection = ({ initialPosts, currentPostId }: {
             <h2 className="text-3xl font-bold text-gray-900 mb-2">More Stories You Might Like</h2>
             <p className="text-gray-600">Discover more articles from our collection</p>
           </div>
-          
-          {hasMore && !allPostsLoaded && (
-            <button
-              onClick={loadMore}
-              disabled={loading}
-              className="mt-4 lg:mt-0 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Loading...
-                </>
-              ) : 'Load More Articles'}
-            </button>
-          )}
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {posts.map((post) => (
             <article key={post.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow h-full">
-              {/* Image */}
               {post.featured_media_url && (
                 <div className="w-full h-48 relative">
                   <NetworkImage
@@ -244,7 +223,6 @@ const MoreStoriesSection = ({ initialPosts, currentPostId }: {
                 </div>
               )}
               
-              {/* Content */}
               <div className="p-5">
                 <h3 className="font-bold text-gray-900 text-lg mb-3 leading-tight hover:text-red-600 transition-colors line-clamp-2">
                   <Link href={`/posts/${post.slug}`}>
@@ -273,8 +251,36 @@ const MoreStoriesSection = ({ initialPosts, currentPostId }: {
           ))}
         </div>
         
+        {/* Load More Button - FIXED RESPONSIVE: SELALU DI BAWAH */}
+        {hasMore && !allPostsLoaded && (
+          <div className="mt-12 text-center">
+            <button
+              onClick={loadMore}
+              disabled={loading}
+              className="w-full max-w-[300px] mx-auto px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Loading...</span>
+                </>
+              ) : (
+                <>
+                  <span>Load More Articles</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+        
         {allPostsLoaded && (
-          <div className="text-center mt-8 pt-6 border-t border-gray-300">
+          <div className="text-center mt-12 pt-6 border-t border-gray-300">
             <p className="text-gray-600">You've reached the end of the articles</p>
           </div>
         )}
@@ -387,10 +393,8 @@ const SocialShare = ({ title, slug }: { title: string, slug: string }) => {
 
 // Component untuk Tags dengan nama sebenar - FIXED: HIDE ONLY SPECIFIC TAGS
 const PostTags = ({ tags, allTags }: { tags: number[], allTags: WPTag[] }) => {
-  // Hanya hide tags tertentu, bukan semua
   const tagsToHide = ['exclusive', 'top stories', 'topstories', 'top-stories'];
   
-  // Get all tags yang ada pada post
   const postTags = allTags.filter(tag => tags.includes(tag.id));
   
   if (postTags.length === 0) return null;
@@ -400,18 +404,15 @@ const PostTags = ({ tags, allTags }: { tags: number[], allTags: WPTag[] }) => {
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Tags:</h3>
       <div className="flex flex-wrap gap-2">
         {postTags.map((tag) => {
-          // Check if this tag should be hidden
           const shouldHide = tagsToHide.some(hiddenTag => 
             tag.name.toLowerCase().includes(hiddenTag.toLowerCase()) || 
             tag.slug.toLowerCase().includes(hiddenTag.toLowerCase())
           );
           
-          // Jika tag ini adalah yang nak di-hide, skip (jangan render)
           if (shouldHide) {
             return null;
           }
           
-          // Jika bukan tag yang nak di-hide, render seperti biasa
           return (
             <Link
               key={tag.id}
@@ -489,10 +490,8 @@ export default function Post({
       <div className="min-h-screen bg-white py-8">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Main Content - 3/4 width */}
             <div className="lg:w-3/4">
               <article className="bg-white rounded-xl shadow-lg overflow-hidden">
-                {/* Featured Image */}
                 {post.featured_media_url && (
                   <div className="w-full max-w-[1200px] mx-auto p-4">
                     <NetworkImage
@@ -507,20 +506,16 @@ export default function Post({
                   </div>
                 )}
                 
-                {/* Article Header */}
                 <div className="p-8 max-w-4xl mx-auto">
-                  {/* Title */}
                   <h1 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
                     {cleanTitle}
                   </h1>
                   
-                  {/* Meta Information - DATE & CATEGORIES SATU ROW */}
                   <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
                     <div className="flex items-center space-x-2">
                       <span className="font-semibold">{formatDate(post.date)}</span>
                     </div>
                     
-                    {/* Categories */}
                     {post.categories && post.categories.length > 0 && (
                       <div className="flex items-center space-x-2">
                         <span>•</span>
@@ -541,15 +536,11 @@ export default function Post({
                     )}
                   </div>
 
-                  {/* BYLINE & SOCIAL SHARE - SEBARIS */}
                   <div className="mb-8 pb-6 border-b border-gray-200">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div>
-                        <span className="font-medium text-red-600 text-lg">By {cleanAuthor}</span>
-                        
-                        {/* Authors info jika ada */}
-                        {post.authors && post.authors.length > 0 && (
-                          <div className="flex items-center mt-2">
+                      <div className="flex items-center">
+                        {post.authors && post.authors.length > 0 ? (
+                          <>
                             {post.authors.slice(0, 1).map((author: WPAuthor) => (
                               <div key={author.term_id} className="flex items-center">
                                 <NetworkImage
@@ -567,16 +558,16 @@ export default function Post({
                                 </div>
                               </div>
                             ))}
-                          </div>
+                          </>
+                        ) : (
+                          <span className="font-medium text-red-600 text-lg">By {cleanAuthor}</span>
                         )}
                       </div>
                       
-                      {/* Social Share */}
                       <SocialShare title={cleanTitle} slug={post.slug} />
                     </div>
                   </div>
                   
-                  {/* Article Content */}
                   {content && (
                     <div 
                       className="prose prose-lg max-w-none"
@@ -584,7 +575,6 @@ export default function Post({
                     />
                   )}
                   
-                  {/* Tags dengan nama sebenar - Hanya hide specific tags */}
                   {post.tags && post.tags.length > 0 && (
                     <PostTags tags={post.tags} allTags={allTags} />
                   )}
@@ -592,7 +582,6 @@ export default function Post({
               </article>
             </div>
             
-            {/* Sidebar - 1/4 width */}
             <div className="lg:w-1/4">
               <LatestStories posts={latestPosts} />
               <PopularCategories categories={categories} />
@@ -600,7 +589,6 @@ export default function Post({
           </div>
         </div>
         
-        {/* More Stories Section - FULL WIDTH (DI BAWAH) */}
         {initialMorePosts.length > 1 && (
           <MoreStoriesSection 
             initialPosts={initialMorePosts} 
