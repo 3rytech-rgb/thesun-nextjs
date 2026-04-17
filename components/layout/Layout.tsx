@@ -15,7 +15,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ 
   children, 
-  title = 'The Sun Malaysia', 
+  title = 'The Sun Malaysia - Latest Trending News: National, World and Viral', 
   description = 'The Sun Malaysia - Latest Breaking News, Sports, Lifestyle, Business and Entertainment',
   categories = [],
   hideContentBackground = false,
@@ -32,7 +32,7 @@ const Layout: React.FC<LayoutProps> = ({
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="The Sun Malaysia" />
+        <meta property="og:site_name" content="The Sun Malaysia - Latest Trending News: National, World and Viral" />
         
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -59,9 +59,7 @@ const Layout: React.FC<LayoutProps> = ({
             </div>
           ) : (
             // Dengan background putih (default)
-            <div className="container mx-auto px-4 sm:px-6">
-              {/* REMOVED: Gradient border top - ini yang buat garisan merah */}
-              
+            <div className="container mx-auto px-1 sm:px-2">
               <div className="bg-white rounded-2xl shadow-2xl relative overflow-hidden">
                 {/* Optional: Decorative corner accents (boleh keep atau buang) */}
                 <div className="absolute top-0 left-0 w-20 h-20">
@@ -71,8 +69,8 @@ const Layout: React.FC<LayoutProps> = ({
                   <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-red-500 rounded-tr-lg"></div>
                 </div>
                 
-                {/* Content container */}
-                <div className={`p-4 sm:p-6 lg:p-8 ${fullWidth ? '' : 'max-w-7xl mx-auto'}`}>
+                {/* Content container - Content penuh tanpa max-width */}
+                <div className="p-2 sm:p-3">
                   {children}
                 </div>
                 

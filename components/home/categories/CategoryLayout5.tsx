@@ -1,3 +1,4 @@
+import { getPostUrl } from '../../../lib/wordpress';
 // components/home/categories/CategoryLayout5.tsx
 import { useState, useEffect } from 'react';
 import { WPPostWithMedia, WPCategory } from '../../../types/wordpress';
@@ -20,31 +21,15 @@ interface CategoryLayout5Props {
 
 export default function CategoryLayout5({ categoryColumns, categories, isLast = false }: CategoryLayout5Props) {
   const [currentRow, setCurrentRow] = useState(0);
-  const [isClient, setIsClient] = useState(false);
-  const rowsPerColumn = 5;
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const rowsPerColumn = 3;
 
   if (!categoryColumns || categoryColumns.length === 0) return null;
 
-  const getPostCategoryName = (post: WPPostWithMedia, allCategories: WPCategory[]): string => {
-    if (!post.categories || post.categories.length === 0) return 'Uncategorized';
-    
-    const categoryId = typeof post.categories[0] === 'number' 
-      ? post.categories[0] 
-      : (post.categories[0] as any).id;
-    
-    const category = allCategories.find(cat => cat.id === categoryId);
-    return category ? cleanTextContent(category.name) : 'Uncategorized';
-  };
-
-  const totalRows = Math.min(...categoryColumns.map(col => col.posts.length));
+  const totalRows = Math.min(...categoryColumns.map(col => col.posts?.length || 0));
   const maxRows = Math.min(totalRows, rowsPerColumn * 3);
   
   // Untuk server rendering, selalu mulai dari row 0
-  const displayCurrentRow = isClient ? currentRow : 0;
+  const displayCurrentRow = 0; // Always start from 0 to avoid hydration mismatch
 
   const handleNext = () => {
     if (displayCurrentRow + rowsPerColumn < totalRows) {
@@ -69,7 +54,7 @@ export default function CategoryLayout5({ categoryColumns, categories, isLast = 
       {/* Three Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         {categoryColumns.map((column, colIndex) => {
-          const columnPosts = column.posts.slice(displayCurrentRow, displayCurrentRow + rowsPerColumn);
+          const columnPosts = (column.posts || []).slice(displayCurrentRow, displayCurrentRow + rowsPerColumn);
           
           return (
             <div key={column.slug} className="space-y-6">
@@ -119,7 +104,7 @@ export default function CategoryLayout5({ categoryColumns, categories, isLast = 
                         </div>
                         
                         {/* Title */}
-                        <Link href={`/posts/${post.slug}`}>
+                        <Link href={`${getPostUrl(post)}`}>
                           <h4 
                             className="font-bold text-gray-900 text-sm hover:text-blue-600 transition-colors cursor-pointer line-clamp-2 mb-2 leading-tight mt-1"
                             dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 
@@ -128,22 +113,15 @@ export default function CategoryLayout5({ categoryColumns, categories, isLast = 
                         
                         {/* Category & Author */}
                         <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center space-x-2">
-                            {/* Category */}
-                            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
-                              {getPostCategoryName(post, categories)}
+                          {/* Author */}
+                          {post.authors && post.authors.length > 0 && (
+                            <span className="flex items-center text-xs text-gray-600">
+                              <svg className="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              {post.authors[0].display_name}
                             </span>
-                            
-                            {/* Author */}
-                            {post.authors && post.authors.length > 0 && (
-                              <span className="flex items-center text-xs text-gray-600">
-                                <svg className="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                {post.authors[0].display_name}
-                              </span>
-                            )}
-                          </div>
+                          )}
                           
                           {/* Read time indicator */}
                           <span className="text-xs text-gray-500 flex items-center">
@@ -176,8 +154,8 @@ export default function CategoryLayout5({ categoryColumns, categories, isLast = 
         })}
       </div>
 
-      {/* Navigation Controls - hanya tampil di client */}
-      {isClient && totalRows > rowsPerColumn && (
+      {/* Navigation Controls */}
+      {totalRows > rowsPerColumn && (
         <div className="flex items-center justify-center space-x-4 mt-8 pt-6 border-t border-gray-200">
           <button
             onClick={handlePrevious}

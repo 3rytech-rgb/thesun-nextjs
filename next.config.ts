@@ -2,6 +2,33 @@
 const nextConfig = {
   reactStrictMode: true,
   
+  // Handle trailing slashes
+  trailingSlash: false,
+  
+  // Redirect trailing slashes to non-trailing version
+  async redirects() {
+    return [
+      // Handle multiple trailing slashes (e.g., /post/slug///)
+      {
+        source: '/:path+//:rest*',
+        destination: '/:path+',
+        permanent: true,
+      },
+      // Handle single trailing slash
+      {
+        source: '/:path+/',
+        destination: '/:path+',
+        permanent: true,
+      },
+      // Redirect old post routes to new URL structure
+      // Note: These redirects are handled by the pages themselves
+      // /post/[slug].tsx redirects to /posts/[slug].tsx
+      // /posts/[slug].tsx redirects to correct category-based URL using generatePostUrl
+      // Redirect old category/post routes to new parent/child structure
+      // This will be handled by the dynamic route [...slug].tsx
+    ];
+  },
+  
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
@@ -12,8 +39,9 @@ const nextConfig = {
       'localhost',
       'sunmedia-local.local',
       '190.254.4.127',
-      'thesun.my', // ✅ TAMBAHKAN INI
-      'www.thesun.my', // ✅ JIKA ADA VERSI WWW
+      '190.254.2.223', // New API server
+      'thesun.my', // Keep for backward compatibility
+      'www.thesun.my', // Keep for backward compatibility
     ],
     
     // Atau gunakan remotePatterns (lebih aman untuk Next.js versi baru)
@@ -27,6 +55,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'www.thesun.my',
         pathname: '/wp-content/uploads/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '190.254.2.223',
+        pathname: '/wp-content/**',
       },
       {
         protocol: 'http',

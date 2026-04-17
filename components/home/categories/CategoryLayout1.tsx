@@ -1,3 +1,4 @@
+import { getPostUrl } from '../../../lib/wordpress';
 // components/home/categories/CategoryLayout1.tsx
 import Link from 'next/link';
 import { WPPostWithMedia, WPCategory } from '../../../types/wordpress';
@@ -20,11 +21,7 @@ export default function CategoryLayout1({
   categories, 
   isLast = false 
 }: CategoryLayout1Props) {
-  const [isClient, setIsClient] = useState(false);
-  
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+
 
   if (posts.length === 0) return null;
 
@@ -44,12 +41,9 @@ export default function CategoryLayout1({
 
   // Gunakan format date yang sederhana dan konsisten
   const formatDateSafe = (dateString: string) => {
-    if (!isClient) {
-      // Di server, gunakan format yang sederhana
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-    return formatRelativeTime(dateString);
+    // Always use simple format to avoid hydration mismatch
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   return (
@@ -58,7 +52,7 @@ export default function CategoryLayout1({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">
-            # {name}
+             {name}
           </h2>
           <div className="w-20 h-1 bg-red-600 rounded-full mt-2"></div>
         </div>
@@ -66,7 +60,7 @@ export default function CategoryLayout1({
           href={`/category/${slug}`}
           className="text-red-600 hover:text-red-700 font-semibold text-sm hover:underline transition-colors"
         >
-          More {name} stories →
+         Explore More {name}  →
         </Link>
       </div>
 
@@ -104,7 +98,7 @@ export default function CategoryLayout1({
             </div>
             
             {/* Title */}
-            <Link href={`/posts/${featuredPost.slug}`}>
+            <Link href={`${getPostUrl(featuredPost)}`}>
               <h3 
                 className="text-3xl font-bold text-gray-900 mb-4 hover:text-red-600 transition-colors cursor-pointer leading-tight"
                 dangerouslySetInnerHTML={{ __html: cleanTextContent(featuredPost.title.rendered) }} 
@@ -125,7 +119,7 @@ export default function CategoryLayout1({
             
             {/* Read More Link */}
             <Link 
-              href={`/posts/${featuredPost.slug}`}
+              href={`${getPostUrl(featuredPost)}`}
               className="inline-flex items-center text-red-600 hover:text-red-700 font-medium text-sm transition-colors"
             >
               Read full story
@@ -163,7 +157,7 @@ export default function CategoryLayout1({
                 </div>
                 
                 {/* Title */}
-                <Link href={`/posts/${post.slug}`}>
+                <Link href={`${getPostUrl(post)}`}>
                   <h4 
                     className="font-bold text-gray-900 text-sm hover:text-red-600 transition-colors cursor-pointer line-clamp-2 mb-2"
                     dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 
@@ -182,18 +176,7 @@ export default function CategoryLayout1({
         </div>
       </div>
 
-      {/* View All Link */}
-      <div className="text-center mt-8 pt-6 border-t border-gray-200">
-        <Link 
-          href={`/category/${slug}`}
-          className="inline-flex items-center text-red-600 hover:text-red-800 font-medium transition-colors"
-        >
-          View all {name} stories
-          <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </Link>
-      </div>
+   
 
       {/* Line break antara sections (kecuali section terakhir) */}
       {!isLast && (

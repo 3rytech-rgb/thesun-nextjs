@@ -1,7 +1,7 @@
 import { WPPost } from "../types/wordpress";
 
 export async function getPosts(): Promise<WPPost[]> {
-  const res = await fetch("https://thesun.my/wp-json/wp/v2/posts", {
+  const res = await fetch("http://190.254.2.223/wp-json/wp/v2/posts", {
     cache: "no-store",
   });
 

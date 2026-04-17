@@ -1,3 +1,4 @@
+import { getPostUrl } from '../../../lib/wordpress';
 // components/home/categories/CategoryLayout3.tsx
 import Link from 'next/link';
 import { WPPostWithMedia, WPCategory } from '../../../types/wordpress';
@@ -74,7 +75,7 @@ export default function CategoryLayout3({
                   </span>
                 </div>
                 
-                <Link href={`/posts/${featuredPost.slug}`}>
+                <Link href={`${getPostUrl(featuredPost)}`}>
                   <h3 
                     className="text-3xl font-bold text-gray-900 mb-4 hover:text-pink-600 transition-colors cursor-pointer"
                     dangerouslySetInnerHTML={{ __html: cleanTextContent(featuredPost.title.rendered) }} 
@@ -117,7 +118,7 @@ export default function CategoryLayout3({
                     </span>
                   </div>
                   
-                  <Link href={`/posts/${post.slug}`}>
+                  <Link href={`${getPostUrl(post)}`}>
                     <h4 
                       className="font-semibold text-gray-900 text-sm hover:text-purple-600 transition-colors cursor-pointer line-clamp-2"
                       dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 
@@ -153,7 +154,7 @@ export default function CategoryLayout3({
                   </span>
                 </div>
                 
-                <Link href={`/posts/${post.slug}`}>
+                <Link href={`${getPostUrl(post)}`}>
                   <h4 
                     className="font-semibold text-gray-900 text-sm hover:text-pink-600 transition-colors cursor-pointer line-clamp-2"
                     dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 

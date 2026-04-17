@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CategoryItem } from './types';
+import { cleanHtmlContent } from '../../home/utils/contentCleaner';
 
 interface CategoryColumnProps {
   category: CategoryItem;
@@ -29,7 +30,7 @@ export default function CategoryColumn({
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-bold text-white text-xl group-hover:text-white transition-colors duration-300 drop-shadow-lg">
-              {category.name}
+               {cleanHtmlContent(category.name)}
             </h3>
             {category.hot && (
               <span className="text-xs bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-full animate-pulse shadow-lg border border-red-400">
@@ -68,7 +69,7 @@ export default function CategoryColumn({
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-slate-400 rounded-full group-hover/sub:bg-red-400 group-hover/sub:animate-pulse transition-all duration-300"></div>
                   <span className="text-slate-300 group-hover/sub:text-white transition-colors duration-300 text-sm font-medium">
-                    {subItem.name}
+                     {cleanHtmlContent(subItem.name)}
                   </span>
                 </div>
                 <div className="opacity-0 group-hover/sub:opacity-100 transform translate-x-0 group-hover/sub:translate-x-1 transition-all duration-300">

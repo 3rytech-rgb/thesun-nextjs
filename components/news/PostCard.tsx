@@ -1,5 +1,6 @@
 // components/news/PostCard.tsx
 import { WPPost, WPCategory } from '../../types/wordpress';
+import { getPostUrl } from '../../lib/wordpress';
 import Image from 'next/image';
 
 interface PostCardProps {
@@ -73,7 +74,7 @@ export default function PostCard({ post }: PostCardProps) {
         </div>
         
         <a 
-          href={`/posts/${post.slug}`}
+          href={getPostUrl(post)}
           className="post-link"
         >
           Read More →

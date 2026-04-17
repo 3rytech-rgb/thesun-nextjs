@@ -5,7 +5,7 @@ import CategoryLayout5 from './CategoryLayout5';
 interface CombinedSectionProps {
   malaysiaPosts: WPPostWithMedia[];
   worldPosts: WPPostWithMedia[];
-  asiaPosts: WPPostWithMedia[];
+  businessPosts: WPPostWithMedia[];
   categories: WPCategory[];
   isLast?: boolean;
 }
@@ -13,7 +13,7 @@ interface CombinedSectionProps {
 export default function CombinedSection({ 
   malaysiaPosts, 
   worldPosts, 
-  asiaPosts, 
+  businessPosts,
   categories, 
   isLast = false 
 }: CombinedSectionProps) {
@@ -28,9 +28,9 @@ export default function CombinedSection({
     cat.name.toLowerCase().includes('world')
   );
 
-  const asiaCategory = categories.find((cat: WPCategory) => 
-    cat.slug.toLowerCase().includes('asia') || 
-    cat.name.toLowerCase().includes('asia')
+  const businessCategory = categories.find((cat: WPCategory) => 
+    cat.slug.toLowerCase().includes('business') || 
+    cat.name.toLowerCase().includes('business')
   );
 
   const categoryColumns = [
@@ -47,10 +47,10 @@ export default function CombinedSection({
       category: worldCategory || categories[1]
     },
     {
-      name: asiaCategory?.name || 'Asia',
-      slug: asiaCategory?.slug || 'asia',
-      posts: asiaPosts,
-      category: asiaCategory || categories[2]
+      name: businessCategory?.name || 'Business',
+      slug: businessCategory?.slug || 'business',
+      posts: businessPosts || [],
+      category: businessCategory || categories[2]
     }
   ];
 

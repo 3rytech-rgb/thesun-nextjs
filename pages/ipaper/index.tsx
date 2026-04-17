@@ -1,8 +1,16 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import Head from 'next/head';
+import { GetStaticProps } from 'next';
+import Layout from '../../components/layout/Layout';
+import Breadcrumb from '../../components/common/Breadcrumb';
 import { PDFData } from '@/types/ipaper';
+import { WPCategory } from '../../types/wordpress';
+import { getCategories } from '../../lib/wordpress';
 import styles from '@/styles/IPaper.module.css';
+
+interface Props {
+  categories: WPCategory[];
+}
 
 // Dynamic import dengan path yang betul
 const Flipbook = dynamic(() => import('@/components/ipaper/Flipbook'), {
@@ -10,7 +18,7 @@ const Flipbook = dynamic(() => import('@/components/ipaper/Flipbook'), {
   loading: () => <div className={styles.loading}>Loading flipbook...</div>
 });
 
-export default function IPaperPage() {
+export default function IPaperPage({ categories }: Props) {
   const [currentPDF, setCurrentPDF] = useState<PDFData | null>(null);
   const [previousPDFs, setPreviousPDFs] = useState<PDFData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -63,11 +71,12 @@ export default function IPaperPage() {
   }
 
   return (
-    <>
-      <Head>
-        <title>theSun iPaper - Digital Newspaper</title>
-        <meta name="description" content="Read theSun newspaper in digital format" />
-      </Head>
+    <Layout 
+      categories={categories}
+      title="theSun iPaper - Digital Newspaper | The Sun Malaysia"
+      description="Read theSun newspaper in digital format"
+    >
+      <Breadcrumb categories={categories} />
 
       <div className={styles.container}>
         {/* Current Paper Info */}
@@ -175,6 +184,16 @@ export default function IPaperPage() {
 
       {/* Include Font Awesome */}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    </>
+    </Layout>
   );
 }
+
+export const getStaticProps: GetStaticProps = async () => {
+  const categories = await getCategories();
+  return {
+    props: {
+      categories,
+    },
+    revalidate: 60,
+  };
+};

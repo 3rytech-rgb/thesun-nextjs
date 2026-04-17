@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { WPPostWithMedia, WPCategory } from '../../types/wordpress';
 import { cleanTextContent } from './utils/contentCleaner';
 import { formatRelativeTime } from './utils/timeFormatter';
+import { getPostUrl } from '../../lib/wordpress';
 
 interface TopStoriesProps {
   posts: WPPostWithMedia[];
@@ -83,6 +84,9 @@ export default function TopStories({ posts, categories }: TopStoriesProps) {
     });
   }
 
+  // Ambil hanya 5 posts pertama
+  const topFivePosts = posts.slice(0, 5);
+  
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="mb-6 pb-4 border-b-2 border-red-600">
@@ -91,7 +95,7 @@ export default function TopStories({ posts, categories }: TopStoriesProps) {
         </h3>
       </div>
       
-      {posts.length === 0 ? (
+      {topFivePosts.length === 0 ? (
         <div className="text-center py-8">
           <div className="text-gray-400 mb-4">
             <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,7 +109,7 @@ export default function TopStories({ posts, categories }: TopStoriesProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {posts.map((post, index) => {
+          {topFivePosts.map((post, index) => {
             const categoryName = getPostCategoryName(post, categories);
             const cleanTitle = cleanTextContent(post.title.rendered);
             
@@ -140,7 +144,7 @@ export default function TopStories({ posts, categories }: TopStoriesProps) {
                     </div>
                     
                     {/* Title only - no excerpt, no thumbnail */}
-                    <Link href={`/posts/${post.slug}`}>
+                    <Link href={`${getPostUrl(post)}`}>
                       <h5 
                         className="font-semibold text-gray-900 text-sm hover:text-red-600 transition-colors cursor-pointer leading-tight line-clamp-2"
                         dangerouslySetInnerHTML={{ __html: cleanTitle }} 
@@ -149,8 +153,8 @@ export default function TopStories({ posts, categories }: TopStoriesProps) {
                   </div>
                 </div>
                 
-                {/* Simple divider */}
-                {index < posts.length - 1 && (
+                 {/* Simple divider */}
+                {index < topFivePosts.length - 1 && (
                   <div className="mt-4 border-t border-gray-100"></div>
                 )}
               </div>

@@ -1,5 +1,6 @@
 // components/news/FeaturedPost.tsx
 import { WPPost } from '../../types/wordpress';
+import { getPostUrl } from '../../lib/wordpress';
 import Image from 'next/image';
 
 interface FeaturedPostProps {
@@ -34,7 +35,7 @@ export default function FeaturedPost({ post }: FeaturedPostProps) {
           {excerpt}
         </div>
         <a 
-          href={`/posts/${post.slug}`}
+          href={getPostUrl(post)}
           className="read-more-btn"
         >
           Read Full Story

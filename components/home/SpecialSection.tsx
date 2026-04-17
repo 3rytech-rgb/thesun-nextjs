@@ -1,3 +1,4 @@
+import { getPostUrl } from '../../lib/wordpress';
 // components/home/SpecialSection.tsx
 import Link from 'next/link';
 import { WPPostWithMedia, WPCategory } from '../../types/wordpress';
@@ -177,7 +178,7 @@ export default function SpecialSection({
                   </div>
                 </div>
                 
-                <Link href={`/posts/${featuredPost.slug}`}>
+                <Link href={`${getPostUrl(featuredPost)}`}>
                   <h3 
                     className="text-2xl font-bold mb-4 hover:opacity-90 transition-opacity cursor-pointer"
                     style={{ color: textColor }}
@@ -199,7 +200,7 @@ export default function SpecialSection({
                 
                 <div className="flex items-center justify-between">
                   <Link 
-                    href={`/posts/${featuredPost.slug}`}
+                    href={`${getPostUrl(featuredPost)}`}
                     className="inline-flex items-center text-sm font-semibold hover:translate-x-1 transition-transform"
                     style={{ color: accentColor }}
                   >
@@ -268,7 +269,7 @@ export default function SpecialSection({
                         </span>
                       </div>
                       
-                      <Link href={`/posts/${post.slug}`}>
+                      <Link href={`${getPostUrl(post)}`}>
                         <h4 
                           className="font-semibold text-sm mb-2 group-hover:opacity-90 transition-opacity cursor-pointer line-clamp-2"
                           style={{ color: textColor }}

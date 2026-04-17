@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { WPPostWithMedia, WPCategory } from '../../types/wordpress';
 import { cleanTextContent, getFullParagraphExcerpt } from './utils/contentCleaner';
 import { formatRelativeTime } from './utils/timeFormatter';
+import { getPostUrl } from '../../lib/wordpress';
 
 interface LatestNewsProps {
   posts: WPPostWithMedia[];
@@ -86,7 +87,7 @@ export default function LatestNews({ posts, categories }: LatestNewsProps) {
                 </span>
               </div>
               
-              <Link href={`/posts/${post.slug}`}>
+              <Link href={`${getPostUrl(post)}`}>
                 <h4 
                   className={`font-semibold text-gray-900 hover:text-red-600 transition-colors cursor-pointer ${
                     index === 0 ? 'text-lg' : 'text-sm'

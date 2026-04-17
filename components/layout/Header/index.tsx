@@ -8,6 +8,11 @@ import MobileSidebar from './MobileSidebar';
 import DesktopCanvasModal from './DesktopCanvasModal';
 import type { CategoryItem, BreakingNews as BreakingNewsType } from './types';
 import type { WPCategory } from '../../../types/wordpress';
+import { getPostUrl } from '../../../lib/wordpress';
+
+// Import komponen animasi baru
+
+import RayaAnimation from './rayaanimation'; // Animasi Hari Raya baru
 
 interface HeaderProps {
   categories?: WPCategory[];
@@ -21,20 +26,13 @@ export default function Header({ categories = [] }: HeaderProps) {
   const [isPaused, setIsPaused] = useState(false);
   const [breakingNews, setBreakingNews] = useState<BreakingNewsType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showRayaAnimation, setShowRayaAnimation] = useState(true); // State untuk toggle animasi raya
   const dropdownContainerRef = useRef<HTMLDivElement>(null);
   const marqueeRef = useRef<HTMLDivElement>(null);
 
   // Clean category names
-  const cleanCategories = categories
-    .map(cat => ({
-      ...cat,
-      name: cleanHtmlContent(cat.name)
-    }))
-    .filter(cat => cat.name.toLowerCase() !== 'uncategorized');
-
-  // Helper function untuk clean HTML
   function cleanHtmlContent(html: string): string {
-    if (!html) return '';
+    if (!html || typeof html !== 'string') return '';
     return html
       .replace(/<[^>]*>/g, '')
       .replace(/&amp;/g, '&')
@@ -48,32 +46,49 @@ export default function Header({ categories = [] }: HeaderProps) {
   const fetchBreakingNews = async () => {
     try {
       setIsLoading(true);
-      
-      // URL API
+
+      // Use only the public API - remove internal IP address
       const apiUrl = 'https://thesun.my/wp-json/wp/v2/posts';
-      
-      console.log('📡 Fetching breaking news from:', apiUrl);
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      // Fetch data dari WordPress API
-      const response = await fetch(
-        `${apiUrl}?per_page=10&_embed=wp:term`,
-        {
-          signal: controller.signal,
-          cache: 'no-cache'
-        }
-      );
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      console.log('📡 Fetching breaking news from API:', apiUrl);
+
+      let response;
+      try {
+        response = await fetch(
+          `${apiUrl}?per_page=10&_embed=wp:term`,
+          {
+            cache: 'no-cache',
+            headers: {
+              'Accept': 'application/json'
+            }
+          }
+        );
+        console.log('✅ API fetch successful');
+      } catch (fetchError) {
+        console.warn('⚠️ API fetch failed:', fetchError);
+        // Return empty array instead of throwing error
+        setBreakingNews([]);
+        setIsLoading(false);
+        return;
       }
       
-      const posts = await response.json();
-      console.log('✅ Received posts:', posts?.length || 0);
+      if (!response.ok) {
+        console.warn(`⚠️ API response not OK: ${response.status} ${response.statusText}`);
+        // Return empty array instead of throwing error
+        setBreakingNews([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      let posts;
+      try {
+        posts = await response.json();
+        console.log('✅ Received posts:', posts?.length || 0);
+      } catch (jsonError) {
+        console.warn('⚠️ Failed to parse JSON response:', jsonError);
+        setBreakingNews([]);
+        setIsLoading(false);
+        return;
+      }
       
       // Transform data ke format breaking news DENGAN LINK YANG BETUL
       const newsItems: BreakingNewsType[] = posts.map((post: any) => {
@@ -83,23 +98,12 @@ export default function Header({ categories = [] }: HeaderProps) {
           category = post._embedded['wp:term'][0][0].name;
         }
         
-        // PENTING: Generate link yang match dengan pages/posts/[slug].tsx
-        // WordPress biasanya ada format: https://thesun.my/some-slug/
-        // Kita perlu convert ke: /posts/some-slug
+        // PENTING: Generate link yang match dengan pages/[category]/[slug].tsx
+        // Format: /{shortenedCategorySlug}/{postSlug}
         let postLink = '';
-        
-        if (post.slug) {
-          // Format: /posts/[slug] - INI YANG MATCH DENGAN pages/posts/[slug].tsx
-          postLink = `/posts/${post.slug}`;
-        } else if (post.link) {
-          // Jika ada WordPress link, extract slug dari link tersebut
-          const url = new URL(post.link);
-          const slugFromLink = url.pathname.split('/').filter(Boolean).pop();
-          postLink = `/posts/${slugFromLink || post.id}`;
-        } else {
-          // Fallback ke ID
-          postLink = `/posts/${post.id}`;
-        }
+
+        // Use getPostUrl untuk consistency
+        postLink = getPostUrl(post);
         
         console.log('📝 Post:', {
           id: post.id,
@@ -123,47 +127,56 @@ export default function Header({ categories = [] }: HeaderProps) {
       
     } catch (error) {
       console.error('❌ Error fetching breaking news:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      } else {
+        console.error('Non-Error object:', error);
+      }
       
       // FALLBACK DATA dengan link yang betul
       const fallbackNews: BreakingNewsType[] = [
-        { 
-          id: 1, 
-          title: "PM Anwar umum cadangan kenaikan gaji minimum", 
+        {
+          id: 1,
+          title: "Unable to load breaking news - using cached data",
+          slug: "api-unavailable",
+          link: "#", // No link for fallback
+          category: "System"
+        },
+        {
+          id: 2,
+          title: "PM Anwar umum cadangan kenaikan gaji minimum",
           slug: "pm-anwar-umum-cadangan-kenaikan-gaji-minimum",
-          link: "/posts/pm-anwar-umum-cadangan-kenaikan-gaji-minimum", // Format betul
+          link: "/politik/pm-anwar-umum-cadangan-kenaikan-gaji-minimum", // Category-based format
           category: "Politik"
         },
-        { 
-          id: 2, 
-          title: "Harga petrol, diesel turun mulai esok", 
+        {
+          id: 3,
+          title: "Harga petrol, diesel turun mulai esok",
           slug: "harga-petrol-diesel-turun-mulai-esok",
-          link: "/posts/harga-petrol-diesel-turun-mulai-esok", // Format betul
+          link: "/ekonomi/harga-petrol-diesel-turun-mulai-esok", // Category-based format
           category: "Ekonomi"
         },
-        { 
-          id: 3, 
-          title: "Malaysia tuan rumah Piala Asia 2027", 
+        {
+          id: 4,
+          title: "Malaysia tuan rumah Piala Asia 2027",
           slug: "malaysia-tuan-rumah-piala-asia-2027",
-          link: "/posts/malaysia-tuan-rumah-piala-asia-2027", // Format betul
+          link: "/sukan/malaysia-tuan-rumah-piala-asia-2027", // Category-based format
           category: "Sukan"
         },
-        { 
-          id: 4, 
-          title: "Pendakian Gunung Kinabalu dibuka semula", 
+        {
+          id: 5,
+          title: "Pendakian Gunung Kinabalu dibuka semula",
           slug: "pendakian-gunung-kinabalu-dibuka-semula",
-          link: "/posts/pendakian-gunung-kinabalu-dibuka-semula", // Format betul
+          link: "/pelancongan/pendakian-gunung-kinabalu-dibuka-semula", // Category-based format
           category: "Pelancongan"
-        },
-        { 
-          id: 5, 
-          title: "AI ubah landskap pendidikan tinggi", 
-          slug: "ai-ubah-landskap-pendidikan-tinggi",
-          link: "/posts/ai-ubah-landskap-pendidikan-tinggi", // Format betul
-          category: "Pendidikan"
         }
       ];
-      
-      console.log('⚠️ Using fallback data');
+
+      console.log('⚠️ API fetch failed, using fallback data');
       setBreakingNews(fallbackNews);
       
     } finally {
@@ -172,15 +185,15 @@ export default function Header({ categories = [] }: HeaderProps) {
     }
   };
 
-  // Auto update date and time
+   // Auto update date and time - DIKECILKAN
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
       
       const dateOptions: Intl.DateTimeFormatOptions = { 
-        weekday: 'long', 
+        weekday: 'short', 
         year: 'numeric', 
-        month: 'long', 
+        month: 'short', 
         day: 'numeric' 
       };
       setCurrentDate(now.toLocaleDateString('en-US', dateOptions));
@@ -191,7 +204,7 @@ export default function Header({ categories = [] }: HeaderProps) {
         hour12: false 
       };
       const timeString = now.toLocaleTimeString('en-US', timeOptions);
-      setCurrentTime(`${timeString} • Malaysia`);
+      setCurrentTime(`${timeString} • MY`);
     };
 
     updateDateTime();
@@ -204,11 +217,24 @@ export default function Header({ categories = [] }: HeaderProps) {
   useEffect(() => {
     console.log('🚀 Header mounted, fetching breaking news...');
     console.log('📍 Current route structure expects: /posts/[slug]');
-    fetchBreakingNews();
-    
+
+    // Wrap in try-catch to prevent component crashes
+    const safeFetchBreakingNews = async () => {
+      try {
+        await fetchBreakingNews();
+      } catch (error) {
+        console.error('💥 Critical error in fetchBreakingNews:', error);
+        // Fallback is already handled inside fetchBreakingNews
+      }
+    };
+
+    safeFetchBreakingNews();
+
     // Refresh setiap 5 minit
-    const refreshInterval = setInterval(fetchBreakingNews, 5 * 60 * 1000);
-    
+    const refreshInterval = setInterval(() => {
+      safeFetchBreakingNews();
+    }, 5 * 60 * 1000);
+
     return () => {
       console.log('🧹 Cleaning up header');
       clearInterval(refreshInterval);
@@ -239,6 +265,12 @@ export default function Header({ categories = [] }: HeaderProps) {
       document.body.style.overflow = 'unset';
     };
   }, [isSidebarOpen]);
+
+  // Process categories to clean HTML entities
+  const cleanCategories = categories.map(cat => ({
+    ...cat,
+    name: cleanHtmlContent(cat.name)
+  }));
 
   // Group categories by parent
   const parentCategories = cleanCategories.filter(cat => cat.parent === 0);
@@ -358,40 +390,16 @@ export default function Header({ categories = [] }: HeaderProps) {
     setIsPaused(hovering);
   };
 
-  // Snowflake Component
-  const Snowflake = ({ id }: { id: number }) => {
-    const size = Math.random() * 5 + 3;
-    const left = Math.random() * 100;
-    const delay = Math.random() * 5;
-    const duration = Math.random() * 3 + 5;
-    
-    return (
-      <div
-        className="absolute top-0 rounded-full bg-white opacity-80 pointer-events-none"
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          left: `${left}%`,
-          animation: `fall ${duration}s linear ${delay}s infinite`,
-          filter: 'blur(0.5px)'
-        }}
-      />
-    );
-  };
-
   return (
     <header className="relative z-50 bg-slate-900 text-white">
-      {/* Snow Animation */}
-      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-        {Array.from({ length: 50 }).map((_, i) => (
-          <Snowflake key={i} id={i} />
-        ))}
-      </div>
+      {/* Ganti snow animation dengan komponen baru */}
+      
+      
+      {/* Animasi Hari Raya */}
+      {showRayaAnimation && <RayaAnimation />}
       
       {/* Main Header Content */}
       <div className="relative z-20">
-       
-        
         <BreakingNews
           breakingNews={breakingNews}
           isLoading={isLoading}
@@ -400,55 +408,75 @@ export default function Header({ categories = [] }: HeaderProps) {
           marqueeRef={marqueeRef}
         />
         
-        <div className="container mx-auto px-4 py-4">
+        <div className="w-full py-1">
           <div className="flex flex-col lg:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 lg:mb-0">
+            <div className="flex items-center mb-1 lg:mb-0">
               <button
                 onClick={toggleSidebar}
-                className="mr-4 p-2 rounded-lg hover:bg-slate-800 transition-colors duration-200 group"
+                className="mr-1 p-1 rounded-lg hover:bg-slate-800 transition-colors duration-200 group"
                 aria-label="Toggle menu"
               >
-                <div className="w-6 h-6 flex flex-col justify-between">
+                <div className="w-4 h-4 flex flex-col justify-between">
                   <span className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 ${
-                    isSidebarOpen ? 'rotate-45 translate-y-2.5' : ''
+                    isSidebarOpen ? 'rotate-45 translate-y-1.5' : ''
                   }`}></span>
                   <span className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 ${
                     isSidebarOpen ? 'opacity-0' : 'opacity-100'
                   }`}></span>
                   <span className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 ${
-                    isSidebarOpen ? '-rotate-45 -translate-y-2.5' : ''
+                    isSidebarOpen ? '-rotate-45 -translate-y-1.5' : ''
                   }`}></span>
                 </div>
               </button>
               
               <Link href="/" className="inline-block">
-                <div className="flex items-center space-x-3">
-                  <img 
-                    src="/images/thesun-christmas.png"
-                    alt="THE SUN MALAYSIA"
-                    className="h-24 lg:h-28 w-auto cursor-pointer"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
+                <div className="flex items-center space-x-1">
+                   <div className="relative">
+                    <img 
+                      src="/images/thesun-raya.png"
+                      alt="THE SUN MALAYSIA"
+                      className="h-12 lg:h-14 w-auto cursor-pointer relative z-10 transform hover:scale-105 transition-transform duration-300 shadow-lg"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  </div>
                   <div className="hidden">
-                    <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-red-600 to-red-500 text-white px-6 py-3 rounded-xl">
+                    <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-red-600 to-red-500 text-white px-3 py-1.5 rounded-xl">
                       THE SUN
                     </h1>
-                    <p className="text-blue-200 text-sm mt-1 text-center">MALAYSIA</p>
+                    <p className="text-blue-200 text-xs mt-0.5 text-center">MALAYSIA</p>
                   </div>
                 </div>
               </Link>
+
+              {/* Raya Animation Toggle Button - Modern */}
+              <button
+                onClick={() => setShowRayaAnimation(!showRayaAnimation)}
+                className="ml-1 p-0.5 rounded-lg hover:bg-slate-800/50 transition-all duration-300 group relative"
+                aria-label={showRayaAnimation ? "Disable Raya animation" : "Enable Raya animation"}
+                title={showRayaAnimation ? "Disable Hari Raya animation" : "Enable Hari Raya animation"}
+              >
+                <div className="relative w-3 h-3">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className={`w-2 h-2 rounded-sm transition-all duration-500 ${
+                      showRayaAnimation 
+                        ? 'bg-gradient-to-br from-emerald-400 to-cyan-400 shadow-[0_0_3px_rgba(52,211,153,0.5)] rotate-45' 
+                        : 'bg-gradient-to-br from-slate-400 to-slate-500'
+                    }`}></div>
+                  </div>
+                </div>
+              </button>
             </div>
             
-            <div className="text-center lg:text-right mb-4 lg:mb-0">
-              <div className="text-lg font-semibold">
-                {currentDate || 'Loading...'}
-              </div>
-              <div className="text-blue-200 text-sm">
-                {currentTime || 'Loading...'}
-              </div>
+            <div className="text-center lg:text-right mb-1 lg:mb-0">
+               <div className="text-xs font-medium" suppressHydrationWarning>
+                 {currentDate || 'Loading...'}
+               </div>
+               <div className="text-blue-200 text-xs" suppressHydrationWarning>
+                 {currentTime || 'Loading...'}
+               </div>
             </div>
           </div>
           
@@ -473,25 +501,6 @@ export default function Header({ categories = [] }: HeaderProps) {
         onClose={() => setIsSidebarOpen(false)}
         canvasCategories={canvasCategories}
       />
-
-      <style jsx>{`
-        @keyframes fall {
-          0% {
-            transform: translateY(-10px) rotate(0deg);
-            opacity: 0;
-          }
-          10% {
-            opacity: 0.8;
-          }
-          90% {
-            opacity: 0.6;
-          }
-          100% {
-            transform: translateY(100vh) rotate(360deg);
-            opacity: 0;
-          }
-        }
-      `}</style>
     </header>
   );
 }

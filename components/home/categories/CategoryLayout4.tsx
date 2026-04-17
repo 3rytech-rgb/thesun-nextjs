@@ -1,3 +1,4 @@
+import { getPostUrl } from '../../../lib/wordpress';
 // components/home/categories/CategoryLayout4.tsx
 import Link from 'next/link';
 import { WPPostWithMedia, WPCategory } from '../../../types/wordpress';
@@ -107,7 +108,7 @@ export default function CategoryLayout4({
                 )}
               </div>
               
-              <Link href={`/posts/${posts[0].slug}`}>
+              <Link href={`${getPostUrl(posts[0])}`}>
                 <h3 
                   className="text-2xl font-bold text-gray-900 mb-4 hover:text-red-600 transition-colors cursor-pointer flex-1"
                   dangerouslySetInnerHTML={{ __html: cleanTextContent(posts[0].title.rendered) }} 
@@ -127,7 +128,7 @@ export default function CategoryLayout4({
               
               <div className="mt-auto pt-4 border-t border-gray-100">
                 <Link 
-                  href={`/posts/${posts[0].slug}`}
+                  href={`${getPostUrl(posts[0])}`}
                   className="inline-flex items-center text-red-600 hover:text-red-800 font-semibold transition-colors"
                 >
                   Read full story
@@ -169,7 +170,7 @@ export default function CategoryLayout4({
                     </span>
                   </div>
                   
-                  <Link href={`/posts/${post.slug}`}>
+                  <Link href={`${getPostUrl(post)}`}>
                     <h4 
                       className="font-semibold text-gray-900 text-sm hover:text-red-600 transition-colors cursor-pointer leading-tight line-clamp-3 flex-1"
                       dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 
@@ -191,7 +192,7 @@ export default function CategoryLayout4({
                   {/* Read more link */}
                   <div className="mt-3 pt-3 border-t border-gray-100">
                     <Link 
-                      href={`/posts/${post.slug}`}
+                      href={`${getPostUrl(post)}`}
                       className="text-red-600 hover:text-red-800 text-xs font-medium inline-flex items-center transition-colors"
                     >
                       Read more

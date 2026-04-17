@@ -1,5 +1,6 @@
 // components/news/PostGrid.tsx
 import { WPPostWithMedia } from '../../types/wordpress';
+import { getPostUrl } from '../../lib/wordpress';
 import FeaturedPost from './FeaturedPost';
 import PostCard from './PostCard';
 
@@ -71,7 +72,7 @@ export default function PostGrid({ posts }: PostGridProps) {
                 />
                 
                 <a 
-                  href={`/posts/${featuredPost.slug}`}
+                  href={getPostUrl(featuredPost)}
                   className="inline-flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:-translate-y-1 hover:shadow-lg w-full text-center"
                 >
                   Read Full Story
@@ -121,7 +122,7 @@ export default function PostGrid({ posts }: PostGridProps) {
                 />
                 
                 <a 
-                  href={`/posts/${post.slug}`}
+                  href={getPostUrl(post)}
                   className="inline-block mt-3 text-blue-500 hover:text-blue-600 text-sm font-semibold transition-colors duration-200"
                 >
                   Read More →

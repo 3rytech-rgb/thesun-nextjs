@@ -9,7 +9,7 @@ export async function fetchFeaturedMedia(postId: number): Promise<{
 } | null> {
   try {
     const response = await fetch(
-      `https://thesun.my/wp-json/wp/v2/media/${postId}`
+      `http://190.254.2.223/wp-json/wp/v2/media/${postId}`
     );
     
     if (!response.ok) return null;

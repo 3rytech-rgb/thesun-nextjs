@@ -13,6 +13,7 @@ export interface WPAuthor {
   author_category: string;
   first_name: string;
   last_name: string;
+  description?: string; // TAMBAH INI
 }
 
 export interface WPCategory {
@@ -34,6 +35,7 @@ export interface WPMedia {
   id: number;
   source_url: string;
   alt_text: string;
+  caption?: { rendered: string };
   media_details: {
     width: number;
     height: number;
@@ -71,10 +73,11 @@ export interface WPPost {
   link: string;
   author: number;
   featured_media: number;
-  featured_media_url?: string;
-  featured_media_alt?: string;
-  featured_media_width?: number;
-  featured_media_height?: number;
+  featured_media_url?: string | null;
+  featured_media_alt?: string | null;
+  featured_media_caption?: string | null;
+  featured_media_width?: number | null;
+  featured_media_height?: number | null;
   comment_status: string;
   ping_status: string;
   sticky: boolean;
@@ -84,7 +87,7 @@ export interface WPPost {
     footnotes: string;
   };
   categories: number[];
-  tags: number[]; // Pastikan ini ada
+  tags: number[];
   authors?: WPAuthor[];
   class_list?: {
     [key: string]: string;
@@ -99,10 +102,10 @@ export interface WPPost {
 }
 
 export interface WPPostWithMedia extends WPPost {
-  featured_media_url?: string;
-  featured_media_alt?: string;
-  featured_media_width?: number;
-  featured_media_height?: number;
+  featured_media_url?: string | null;
+  featured_media_alt?: string | null;
+  featured_media_width?: number | null;
+  featured_media_height?: number | null;
 }
 
 export interface WPPage {

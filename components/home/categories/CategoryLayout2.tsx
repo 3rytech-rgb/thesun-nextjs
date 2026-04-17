@@ -1,3 +1,4 @@
+import { getPostUrl } from '../../../lib/wordpress';
 // components/home/categories/CategoryLayout2.tsx
 import Link from 'next/link';
 import { WPPostWithMedia, WPCategory } from '../../../types/wordpress';
@@ -199,7 +200,7 @@ export default function CategoryLayout2({
                     </div>
                   </div>
                   
-                  <Link href={`/posts/${post.slug}`}>
+                  <Link href={`${getPostUrl(post)}`}>
                     <h4 
                       className="font-bold text-gray-900 text-lg hover:text-blue-600 transition-colors cursor-pointer leading-tight line-clamp-2 mb-3 flex-1"
                       dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 
@@ -257,7 +258,7 @@ export default function CategoryLayout2({
                     </div>
                   </div>
                   
-                  <Link href={`/posts/${post.slug}`}>
+                  <Link href={`${getPostUrl(post)}`}>
                     <h4 
                       className="font-bold text-gray-900 text-lg hover:text-blue-600 transition-colors cursor-pointer leading-tight line-clamp-2 mb-3 flex-1"
                       dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 

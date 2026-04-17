@@ -1,3 +1,4 @@
+import { getPostUrl } from '../../../lib/wordpress';
 // components/home/categories/GoingViralSection.tsx
 import { WPPostWithMedia, WPCategory } from '../../../types/wordpress';
 import { cleanTextContent } from '../utils/contentCleaner';
@@ -12,17 +13,6 @@ interface GoingViralSectionProps {
 
 export default function GoingViralSection({ posts, categories, isLast = false }: GoingViralSectionProps) {
   if (posts.length === 0) return null;
-
-  const getPostCategoryName = (post: WPPostWithMedia, allCategories: WPCategory[]): string => {
-    if (!post.categories || post.categories.length === 0) return 'Viral';
-    
-    const categoryId = typeof post.categories[0] === 'number' 
-      ? post.categories[0] 
-      : (post.categories[0] as any).id;
-    
-    const category = allCategories.find(cat => cat.id === categoryId);
-    return category ? cleanTextContent(category.name) : 'Viral';
-  };
 
   // Jika posts memiliki kategori, ambil dari post pertama
   const firstPost = posts[0];
@@ -40,12 +30,6 @@ export default function GoingViralSection({ posts, categories, isLast = false }:
       sectionSlug = category.slug;
     }
   }
-
-  // Fungsi untuk generate read time yang konsisten (tanpa Math.random)
-  const getReadTime = (postId: number): number => {
-    // Gunakan post.id untuk hasil yang konsisten antara server dan client
-    return (postId % 5) + 1; // Hasil selalu antara 1-5
-  };
 
   return (
     <div className="bg-gradient-to-br from-gray-900 via-blue-900 to-black rounded-3xl p-8 mb-16 shadow-2xl">
@@ -74,7 +58,7 @@ export default function GoingViralSection({ posts, categories, isLast = false }:
                   <svg className="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                     <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
                   </svg>
-                  #{index + 1} VIRAL
+                  VIRAL
                 </div>
               </div>
               
@@ -93,52 +77,18 @@ export default function GoingViralSection({ posts, categories, isLast = false }:
               )}
               
               <div className="p-6 bg-gradient-to-b from-gray-900/80 to-gray-900">
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4">
                   <span className="text-gray-400 text-xs font-medium">
                     {formatRelativeTime(post.date)}
                   </span>
-                  <span className="bg-orange-900/50 text-orange-300 text-xs px-3 py-1.5 rounded-full font-medium border border-orange-700/30">
-                    {getPostCategoryName(post, categories)}
-                  </span>
                 </div>
                 
-                <Link href={`/posts/${post.slug}`}>
+                <Link href={`${getPostUrl(post)}`}>
                   <h4 
                     className="font-bold text-white text-lg hover:text-orange-300 transition-colors cursor-pointer line-clamp-2 mb-4 leading-tight"
                     dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 
                   />
                 </Link>
-                
-                {/* Author/Byline */}
-                <div className="flex items-center justify-between text-xs text-gray-400 mt-5 pt-5 border-t border-gray-700/50">
-                  {post.authors && post.authors.length > 0 ? (
-                    <span className="flex items-center">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-900/50 to-red-900/50 flex items-center justify-center mr-2 border border-orange-700/30">
-                        <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                      <span className="text-gray-300 font-medium">{post.authors[0].display_name}</span>
-                    </span>
-                  ) : (
-                    <span className="flex items-center">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-900/50 to-red-900/50 flex items-center justify-center mr-2 border border-orange-700/30">
-                        <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                        </svg>
-                      </div>
-                      <span className="text-gray-300 font-medium">Sun Media</span>
-                    </span>
-                  )}
-                  
-                  {/* Read time indicator */}
-                  <span className="text-gray-300 text-xs flex items-center bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700/50">
-                    <svg className="w-4 h-4 text-gray-400 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {getReadTime(post.id)} min read
-                  </span>
-                </div>
               </div>
             </div>
           ))}

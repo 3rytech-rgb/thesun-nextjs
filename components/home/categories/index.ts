@@ -10,3 +10,6 @@ export { default as CategoryLayout3 } from './CategoryLayout3';
 export { default as CategoryLayout4 } from './CategoryLayout4';
 export { default as CombinedSection } from './CombinedSection';
 export { default as CategoryLayout5 } from './CategoryLayout5';
+export { default as CategoryLayout6 } from './CategoryLayout6';
+export { default as VideoSection } from './VideoSection';
+export { default as OpinionSection } from './OpinionSection';

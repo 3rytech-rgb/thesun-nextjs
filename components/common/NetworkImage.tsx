@@ -1,10 +1,11 @@
-// components/common/NetworkImage.tsx
-import Image from 'next/image';
+// components/common/NetworkImage.tsx - UPDATED WITH FALLBACKSRC
+import Image, { ImageProps } from 'next/image';
 import { useState } from 'react';
 
-interface NetworkImageProps {
+interface NetworkImageProps extends Omit<ImageProps, 'src' | 'alt'> {
   src: string;
   alt: string;
+  fallbackSrc?: string;
   width?: number;
   height?: number;
   fill?: boolean;
@@ -18,6 +19,7 @@ interface NetworkImageProps {
 export default function NetworkImage({
   src,
   alt,
+  fallbackSrc = '/default-image.png',
   width,
   height,
   fill = false,
@@ -26,18 +28,37 @@ export default function NetworkImage({
   priority = false,
   onError,
   onLoadingComplete,
+  ...props
 }: NetworkImageProps) {
-  const [error, setError] = useState(false);
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
 
   // Periksa jika URL valid
-  const isValidUrl = src && (src.startsWith('http') || src.startsWith('/') || src.startsWith('data:'));
+  const isValidUrl = (url: string) => {
+    return url && (url.startsWith('http') || url.startsWith('/') || url.startsWith('data:'));
+  };
 
-  if (!isValidUrl || error) {
-    if (onError) onError?.();
+  const handleError = () => {
+    console.warn(`⚠️ Image failed to load: ${src}`);
+    
+    // Try fallback image
+    if (fallbackSrc && !hasError) {
+      setImgSrc(fallbackSrc);
+      setHasError(true);
+    } else if (onError) {
+      onError();
+    }
+  };
+
+  // Jika src kosong atau invalid, guna fallback secara langsung
+  const finalSrc = !src || !isValidUrl(src) ? fallbackSrc : imgSrc;
+
+  // Jika masih error walaupun dengan fallback, show error state
+  if ((hasError && imgSrc === fallbackSrc && !isValidUrl(fallbackSrc)) || !isValidUrl(finalSrc)) {
     return (
       <div 
         className={`bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center ${className}`}
-        style={!fill && width && height ? { width, height } : {}}
+        style={!fill && width && height ? { width, height } : fill ? {} : undefined}
       >
         <div className="text-center p-4">
           <svg className="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,7 +72,7 @@ export default function NetworkImage({
 
   try {
     // Clean URL - remove any double slashes
-    const cleanSrc = src.replace(/([^:]\/)\/+/g, "$1");
+    const cleanSrc = finalSrc.replace(/([^:]\/)\/+/g, "$1");
     
     return (
       <Image
@@ -63,20 +84,22 @@ export default function NetworkImage({
         className={`object-cover ${className}`}
         sizes={sizes || (fill ? "100vw" : undefined)}
         priority={priority}
-        onError={() => {
-          setError(true);
-          onError?.();
-          console.error(`Failed to load image: ${cleanSrc}`);
-        }}
+        onError={handleError}
         onLoadingComplete={onLoadingComplete}
         unoptimized={process.env.NODE_ENV === 'development'}
+        {...props}
       />
     );
   } catch (error) {
     console.error('Image component error:', error);
     return (
-      <div className={`bg-gray-200 ${className}`}>
-        <span className="text-gray-500">Image Error</span>
+      <div 
+        className={`bg-gray-200 ${className}`}
+        style={!fill && width && height ? { width, height } : fill ? {} : undefined}
+      >
+        <div className="flex items-center justify-center h-full">
+          <span className="text-gray-500 text-sm">Image Error</span>
+        </div>
       </div>
     );
   }

@@ -5,7 +5,8 @@ import {
   getPostsByCategoryWithChildren,
   getLatestExclusivePost,
   getTags,
-  getTopStories
+  getTopStories,
+  getPostsByTagSlug
 } from '../lib/wordpress';
 import { WPPost } from '../types/wordpress';
 import { WPCategory } from '../types/wordpress';
@@ -20,11 +21,15 @@ import LifestyleSection from '../components/home/categories/LifestyleSection';
 import GoingViralSection from '../components/home/categories/GoingViralSection';
 import SpotlightSection from '../components/home/categories/SpotlightSection';
 import CombinedSection from '../components/home/categories/CombinedSection';
+import VideoSection from '../components/home/categories/VideoSection';
+import OpinionSection from '../components/home/categories/OpinionSection';
+
 
 interface HomeProps {
   posts: WPPost[];
   categories: WPCategory[];
   exclusivePost: WPPost | null;
+  pinnedPost: WPPost | null; // Post dengan tag "pin"
   topStoriesPosts: WPPost[];
   newsPosts: WPPost[];
   beritaPosts: WPPost[];
@@ -34,16 +39,20 @@ interface HomeProps {
   malaysiaPosts: WPPost[];
   worldPosts: WPPost[];
   asiaPosts: WPPost[];
+  businessPosts: WPPost[];
   prnPosts: WPPost[];
   palestinePosts: WPPost[];
   chinaPosts: WPPost[];
   spotlightPosts: WPPost[];
+  videoPosts: WPPost[];
+  opinionPosts: WPPost[];
 }
 
 export default function Home({ 
   posts, 
   categories, 
   exclusivePost, 
+  pinnedPost,
   topStoriesPosts,
   newsPosts, 
   beritaPosts, 
@@ -53,10 +62,13 @@ export default function Home({
   malaysiaPosts,
   worldPosts,
   asiaPosts,
+  businessPosts,
   prnPosts,
   palestinePosts,
   chinaPosts,
-  spotlightPosts
+  spotlightPosts,
+  videoPosts,
+  opinionPosts
 }: HomeProps) {
   const featuredPost = exclusivePost || posts[0];
   const isExclusive = !!exclusivePost;
@@ -106,28 +118,32 @@ export default function Home({
 
   return (
     <Layout categories={categories}>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="container mx-auto px-1 sm:px-2 lg:px-3 py-6 sm:py-8">
         {/* Main News Grid - Responsive untuk semua device */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-10 lg:mb-12">
           {/* Mobile (<640px): 1 kolum, Tablet (640px-1023px): 2 kolum, Desktop (≥1024px): 2 kolum */}
-          <div className="sm:col-span-2">
-            {featuredPost ? (
-              <FeaturedStory 
-                exclusivePost={featuredPost} 
-                categories={categories} 
-                isNewExclusive={isExclusive}
-              />
-            ) : (
-              <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8 text-center">
-                <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-700 mb-2 sm:mb-3 lg:mb-4">
-                  No featured story available
-                </h3>
-                <p className="text-gray-500 text-xs sm:text-sm lg:text-base">
-                  Check back later for the latest news
-                </p>
-              </div>
-            )}
-          </div>
+           <div className="sm:col-span-2">
+             {pinnedPost ? (
+               <FeaturedStory 
+                 pinnedPost={pinnedPost} 
+                 categories={categories}
+               />
+             ) : featuredPost ? (
+               <FeaturedStory 
+                 pinnedPost={featuredPost} 
+                 categories={categories}
+               />
+             ) : (
+               <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8 text-center">
+                 <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-700 mb-2 sm:mb-3 lg:mb-4">
+                   No featured story available
+                 </h3>
+                 <p className="text-gray-500 text-xs sm:text-sm lg:text-base">
+                   Check back later for the latest news
+                 </p>
+               </div>
+             )}
+           </div>
           
           {/* Mobile: di bawah Featured Story, Tablet: kolum kedua, Desktop: kolum ketiga */}
           <div className="sm:col-span-1 mt-4 sm:mt-0">
@@ -140,21 +156,35 @@ export default function Home({
           </div>
         </div>
 
+      
+
         {/* LINE BREAK SEBELUM CATEGORY SECTIONS */}
         <div className="border-t border-gray-300 my-6 sm:my-10 lg:my-16"></div>
 
-        <GoingViralSection 
-          posts={goingViralPosts} 
-          categories={categories} 
-        />
-        
-        {/* Combined Section */}
-        <CombinedSection 
-          malaysiaPosts={malaysiaPosts}
-          worldPosts={worldPosts}
-          asiaPosts={asiaPosts}
+        <GoingViralSection
+          posts={goingViralPosts}
           categories={categories}
         />
+
+        {/* Combined Section */}
+        <CombinedSection
+          malaysiaPosts={malaysiaPosts}
+          worldPosts={worldPosts}
+          businessPosts={businessPosts}
+          categories={categories}
+        />
+        
+      
+
+  {/* Video and Opinion Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div>
+            <VideoSection categories={categories} />
+          </div>
+          <div>
+            <OpinionSection posts={opinionPosts} categories={categories} />
+          </div>
+        </div>
 
         <BeritaSection 
           posts={beritaPosts} 
@@ -173,9 +203,11 @@ export default function Home({
         />
         
         <SpotlightSection
-          posts={spotlightPosts} 
-          categories={categories} 
+          posts={spotlightPosts}
+          categories={categories}
         />
+
+       
 
         {/* LINE BREAK SEBELUM SPECIAL SECTIONS */}
         <div className="border-t-2 border-dashed border-gray-400 my-8 sm:my-12 lg:my-20"></div>
@@ -218,13 +250,15 @@ export const getStaticProps: GetStaticProps = async () => {
       categories, 
       exclusivePost,
       topStoriesPosts,
-      tags
+      tags,
+      pinnedPosts
     ] = await Promise.all([
       getPosts(30),
       getCategories(),
       getLatestExclusivePost(),
       getTopStories(),
-      getTags()
+      getTags(),
+      getPostsByTagSlug('pin', 1) // Fetch posts dengan tag "pin", limit 1
     ]);
 
     // Debug log untuk top stories
@@ -251,6 +285,17 @@ export const getStaticProps: GetStaticProps = async () => {
       tags: exclusivePost.tags,
       date: exclusivePost.date
     } : 'No exclusive post found');
+
+    // Debug log untuk pinned post
+    console.log('Pinned posts fetched:', {
+      count: pinnedPosts.length,
+      posts: pinnedPosts.map(p => ({
+        id: p.id,
+        title: p.title.rendered,
+        tags: p.tags,
+        date: p.date
+      }))
+    });
 
     // Debug log untuk regular posts
     console.log('Regular posts fetched:', posts.length);
@@ -289,10 +334,13 @@ export const getStaticProps: GetStaticProps = async () => {
       malaysia: getCategoryIdBySlugOrTag('malaysia'),
       world: getCategoryIdBySlugOrTag('world'),
       asia: getCategoryIdBySlugOrTag('asia'),
+      business: getCategoryIdBySlugOrTag('business'),
       prn: getCategoryIdBySlugOrTag('prn') || getCategoryIdBySlugOrTag('pilihan raya'),
       palestine: getCategoryIdBySlugOrTag('palestine') || getCategoryIdBySlugOrTag('gaza'),
       china: getCategoryIdBySlugOrTag('china') || getCategoryIdBySlugOrTag('beijing'),
-      spotlight: getCategoryIdByName('spotlight') || getCategoryIdBySlugOrTag('spotlight')
+      spotlight: getCategoryIdByName('spotlight') || getCategoryIdBySlugOrTag('spotlight'),
+      video: getCategoryIdBySlugOrTag('video'),
+      opinion: getCategoryIdBySlugOrTag('opinion')
     };
 
     // Fetch posts untuk semua sections
@@ -305,10 +353,13 @@ export const getStaticProps: GetStaticProps = async () => {
       categoryIds.malaysia ? getPostsByCategoryWithChildren(categoryIds.malaysia) : Promise.resolve([]),
       categoryIds.world ? getPostsByCategoryWithChildren(categoryIds.world) : Promise.resolve([]),
       categoryIds.asia ? getPostsByCategoryWithChildren(categoryIds.asia) : Promise.resolve([]),
+      categoryIds.business ? getPostsByCategoryWithChildren(categoryIds.business) : Promise.resolve([]),
       categoryIds.prn ? getPostsByCategoryWithChildren(categoryIds.prn) : Promise.resolve([]),
       categoryIds.palestine ? getPostsByCategoryWithChildren(categoryIds.palestine) : Promise.resolve([]),
-      categoryIds.china ? getPostsByCategoryWithChildren(categoryIds.china) : Promise.resolve([]),
-      categoryIds.spotlight ? getPostsByCategoryWithChildren(categoryIds.spotlight) : Promise.resolve([])
+       categoryIds.china ? getPostsByCategoryWithChildren(categoryIds.china) : Promise.resolve([]),
+       categoryIds.spotlight ? getPostsByCategoryWithChildren(categoryIds.spotlight) : Promise.resolve([]),
+       categoryIds.video ? getPostsByCategoryWithChildren(categoryIds.video) : Promise.resolve([]),
+       categoryIds.opinion ? getPostsByCategoryWithChildren(categoryIds.opinion) : Promise.resolve([])
     ]);
 
     console.log('Posts loaded for all sections:', {
@@ -320,17 +371,21 @@ export const getStaticProps: GetStaticProps = async () => {
       malaysia: allPosts[5].length,
       world: allPosts[6].length,
       asia: allPosts[7].length,
-      prn: allPosts[8].length,
-      palestine: allPosts[9].length,
-      china: allPosts[10].length,
-      spotlight: allPosts[11].length
+      business: allPosts[8].length,
+      prn: allPosts[9].length,
+      palestine: allPosts[10].length,
+      china: allPosts[11].length,
+      spotlight: allPosts[12].length,
+      video: allPosts[13].length,
+      opinion: allPosts[14].length
     });
     
     return {
-      props: { 
+      props: {
         posts: posts || [],
         categories: categories || [],
         exclusivePost: exclusivePost || null,
+        pinnedPost: pinnedPosts.length > 0 ? pinnedPosts[0] : null, // Ambil post pertama dengan tag "pin"
         topStoriesPosts: topStoriesPosts || [],
         newsPosts: allPosts[0] || [],
         beritaPosts: allPosts[1] || [],
@@ -340,10 +395,13 @@ export const getStaticProps: GetStaticProps = async () => {
         malaysiaPosts: allPosts[5] || [],
         worldPosts: allPosts[6] || [],
         asiaPosts: allPosts[7] || [],
-        prnPosts: allPosts[8] || [],
-        palestinePosts: allPosts[9] || [],
-        chinaPosts: allPosts[10] || [],
-        spotlightPosts: allPosts[11] || []
+        businessPosts: allPosts[8] || [],
+        prnPosts: allPosts[9] || [],
+        palestinePosts: allPosts[10] || [],
+        chinaPosts: allPosts[11] || [],
+        spotlightPosts: allPosts[12] || [],
+        videoPosts: allPosts[13] || [],
+        opinionPosts: allPosts[14] || []
       },
       revalidate: 60,
     };
@@ -354,6 +412,7 @@ export const getStaticProps: GetStaticProps = async () => {
         posts: [],
         categories: [],
         exclusivePost: null,
+        pinnedPost: null,
         topStoriesPosts: [],
         newsPosts: [],
         beritaPosts: [],
@@ -363,10 +422,13 @@ export const getStaticProps: GetStaticProps = async () => {
         malaysiaPosts: [],
         worldPosts: [],
         asiaPosts: [],
+        businessPosts: [],
         prnPosts: [],
         palestinePosts: [],
         chinaPosts: [],
-        spotlightPosts: []
+        spotlightPosts: [],
+        videoPosts: [],
+        opinionPosts: []
       },
       revalidate: 60,
     };

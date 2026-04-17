@@ -11,8 +11,8 @@ interface BeritaSectionProps {
 export default function BeritaSection({ posts, categories, isLast = false }: BeritaSectionProps) {
   return (
     <CategoryLayout4
-      name="Berita" 
-      slug="berita" 
+      name="Featured" 
+      slug="news" 
       posts={posts} 
       categories={categories} 
       isLast={isLast}

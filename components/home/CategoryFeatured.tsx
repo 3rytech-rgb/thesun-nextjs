@@ -1,4 +1,5 @@
 // components/home/CategoryFeatured.tsx
+import { getPostUrl } from '../../lib/wordpress';
 import Link from 'next/link';
 import { WPPostWithMedia, WPCategory } from '../../types/wordpress';
 import { cleanTextContent, getFullParagraphExcerpt } from './utils/contentCleaner';
@@ -60,7 +61,7 @@ export default function CategoryFeatured({ post, categories }: CategoryFeaturedP
           )}
         </div>
         
-        <Link href={`/posts/${post.slug}`}>
+        <Link href={`${getPostUrl(post)}`}>
           <h3 
             className="text-2xl font-bold text-gray-900 mb-4 hover:text-red-600 transition-colors cursor-pointer flex-1"
             dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }} 
@@ -80,7 +81,7 @@ export default function CategoryFeatured({ post, categories }: CategoryFeaturedP
         
         <div className="mt-auto pt-4 border-t border-gray-100">
           <Link 
-            href={`/posts/${post.slug}`}
+            href={`${getPostUrl(post)}`}
             className="inline-flex items-center text-red-600 hover:text-red-800 font-semibold transition-colors"
           >
             Read full story

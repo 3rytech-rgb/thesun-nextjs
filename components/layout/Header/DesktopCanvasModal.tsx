@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CategoryItem } from './types';
+import { cleanHtmlContent } from '../../home/utils/contentCleaner';
 
 interface DesktopCanvasModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ export default function DesktopCanvasModal({
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-bold text-white text-xl group-hover:text-white transition-colors duration-300 drop-shadow-lg">
-                {category.name}
+                 {cleanHtmlContent(category.name)}
               </h3>
               {category.hot && (
                 <span className="text-xs bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-full animate-pulse shadow-lg border border-red-400">

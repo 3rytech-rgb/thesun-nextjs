@@ -1,14 +1,22 @@
 import { useState, useEffect, useRef, ChangeEvent, DragEvent } from 'react';
-import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { GetStaticProps } from 'next';
+import Layout from '../../components/layout/Layout';
+import Breadcrumb from '../../components/common/Breadcrumb';
 import { PDFData } from '@/types/ipaper';
+import { WPCategory } from '../../types/wordpress';
+import { getCategories } from '../../lib/wordpress';
 import styles from '@/styles/IPaperAdmin.module.css';
+
+interface Props {
+  categories: WPCategory[];
+}
 interface UploadStatus {
   type: 'success' | 'error' | 'info';
   message: string;
 }
 
-export default function IPaperAdminPage() {
+export default function IPaperAdminPage({ categories }: Props) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -142,11 +150,12 @@ export default function IPaperAdminPage() {
   };
 
   return (
-    <>
-      <Head>
-        <title>theSun iPaper Admin</title>
-        <meta name="description" content="Admin panel for theSun iPaper" />
-      </Head>
+    <Layout 
+      categories={categories}
+      title="theSun iPaper Admin | The Sun Malaysia"
+      description="Admin panel for theSun iPaper"
+    >
+      <Breadcrumb categories={categories} />
 
       <div className={styles.adminContainer}>
         {/* Header */}
@@ -339,6 +348,16 @@ export default function IPaperAdminPage() {
 
       {/* Include Font Awesome */}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    </>
+    </Layout>
   );
 }
+
+export const getStaticProps: GetStaticProps = async () => {
+  const categories = await getCategories();
+  return {
+    props: {
+      categories,
+    },
+    revalidate: 60,
+  };
+};
