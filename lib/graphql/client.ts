@@ -11,11 +11,21 @@ console.log('🔗 GraphQL URL:', graphqlUrl);
 // Create HTTP link
 const httpLink = new HttpLink({
   uri: graphqlUrl,
+  credentials: 'same-origin',
   headers: {
     'Content-Type': 'application/json',
-    'User-Agent': 'Mozilla/5.0 (compatible; VercelBot; +https://vercel.com)',
     'Accept': 'application/json',
-    'Referer': 'https://thesun.my/',
+  },
+  fetch: (uri: RequestInfo, options?: RequestInit) => {
+    return fetch(uri, {
+      ...options,
+      headers: {
+        ...(options?.headers as Record<string, string>),
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        'Referer': 'https://thesun.my/',
+        'Accept-Language': 'en-US,en;q=0.9,ms;q=0.8',
+      },
+    });
   },
 });
 
