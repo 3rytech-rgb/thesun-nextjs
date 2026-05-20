@@ -18,10 +18,11 @@ const httpLink = new HttpLink({
   },
   fetch: (uri: string | URL | Request, options?: RequestInit) => {
     const url = typeof uri === 'string' ? uri : uri.toString();
-    const cacheBuster = url.includes('?') ? '&_vercel=' + Date.now() : '?_vercel=' + Date.now();
+    const cacheBuster = url.includes('?') ? '&_=' + Date.now() : '?_=' + Date.now();
     const finalUri = typeof uri === 'string' ? url + cacheBuster : uri;
     return fetch(finalUri, {
       ...options,
+      next: { revalidate: 0 },
       headers: {
         ...(options?.headers as Record<string, string>),
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
