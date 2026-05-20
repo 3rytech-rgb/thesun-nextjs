@@ -1,45 +1,12 @@
-import { GetStaticProps } from 'next';
-import { getPosts, getCategories, getPostsByTagSlug, getTopStories, getPostsByCategoryWithChildren, getTags } from '../lib/wordpress';
-import { WPPost, WPCategory } from '../types/wordpress';
-import Layout from '../components/layout/Layout';
-import { ClientHome } from '../components/home/ClientHome';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getPosts, getCategories, getPostsByTagSlug, getTopStories, getPostsByCategoryWithChildren } from '../../lib/wordpress';
 
-interface HomeProps {
-  posts: WPPost[];
-  categories: WPCategory[];
-  pinnedPosts: WPPost[];
-  topStoriesPosts: WPPost[];
-  newsPosts: WPPost[];
-  beritaPosts: WPPost[];
-  lifestylePosts: WPPost[];
-  goingViralPosts: WPPost[];
-  sportsPosts: WPPost[];
-  malaysiaPosts: WPPost[];
-  worldPosts: WPPost[];
-  asiaPosts: WPPost[];
-  businessPosts: WPPost[];
-  prnPosts: WPPost[];
-  palestinePosts: WPPost[];
-  chinaPosts: WPPost[];
-  spotlightPosts: WPPost[];
-  videoPosts: WPPost[];
-  opinionPosts: WPPost[];
-}
-
-export default function Home(props: HomeProps) {
-  return (
-    <Layout categories={props.categories}>
-      <ClientHome serverData={props} />
-    </Layout>
-  );
-}
-
-export const getStaticProps: GetStaticProps = async () => {
+export default async function handler(_req: NextApiRequest, res: NextApiResponse) {
   try {
     const [posts, categories, tags, pinnedPosts, topStoriesPosts] = await Promise.all([
       getPosts(30),
       getCategories(),
-      getTags(),
+      (await import('../../lib/wordpress')).getTags(),
       getPostsByTagSlug('pin', 5),
       getTopStories(),
     ]);
@@ -83,40 +50,29 @@ export const getStaticProps: GetStaticProps = async () => {
       ids.opinion ? getPostsByCategoryWithChildren(ids.opinion) : Promise.resolve([]),
     ]);
 
-    return {
-      props: {
-        posts: posts || [],
-        categories: categories || [],
-        pinnedPosts: pinnedPosts || [],
-        topStoriesPosts: topStoriesPosts || [],
-        newsPosts: all[0] || [],
-        beritaPosts: all[1] || [],
-        lifestylePosts: all[2] || [],
-        goingViralPosts: all[3] || [],
-        sportsPosts: all[4] || [],
-        malaysiaPosts: all[5] || [],
-        worldPosts: all[6] || [],
-        asiaPosts: all[7] || [],
-        businessPosts: all[8] || [],
-        prnPosts: all[9] || [],
-        palestinePosts: all[10] || [],
-        chinaPosts: all[11] || [],
-        spotlightPosts: all[12] || [],
-        videoPosts: all[13] || [],
-        opinionPosts: all[14] || [],
-      },
-      revalidate: 60,
-    };
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
+    res.status(200).json({
+      posts: posts || [],
+      categories: categories || [],
+      pinnedPosts: pinnedPosts || [],
+      topStoriesPosts: topStoriesPosts || [],
+      newsPosts: all[0] || [],
+      beritaPosts: all[1] || [],
+      lifestylePosts: all[2] || [],
+      goingViralPosts: all[3] || [],
+      sportsPosts: all[4] || [],
+      malaysiaPosts: all[5] || [],
+      worldPosts: all[6] || [],
+      asiaPosts: all[7] || [],
+      businessPosts: all[8] || [],
+      prnPosts: all[9] || [],
+      palestinePosts: all[10] || [],
+      chinaPosts: all[11] || [],
+      spotlightPosts: all[12] || [],
+      videoPosts: all[13] || [],
+      opinionPosts: all[14] || [],
+    });
   } catch {
-    return {
-      props: {
-        posts: [], categories: [], pinnedPosts: [], topStoriesPosts: [],
-        newsPosts: [], beritaPosts: [], lifestylePosts: [], goingViralPosts: [],
-        sportsPosts: [], malaysiaPosts: [], worldPosts: [], asiaPosts: [],
-        businessPosts: [], prnPosts: [], palestinePosts: [], chinaPosts: [],
-        spotlightPosts: [], videoPosts: [], opinionPosts: [],
-      },
-      revalidate: 60,
-    };
+    res.status(500).json({ error: 'Failed to fetch' });
   }
-};
+}
