@@ -144,7 +144,7 @@ export default function Home({
                   <div key={start} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {bottomPosts.slice(start, start + 2).map((post) => {
                       const catId = typeof post.categories?.[0] === 'number' ? post.categories[0] : (post.categories?.[0] as any)?.id;
-                      const catName = catId ? categories.find(c => c.id === catId)?.name || '' : '';
+                      const catName = catId ? cleanHtmlContent(categories.find(c => c.id === catId)?.name || '') : '';
                       const cleanTitle = cleanHtmlContent(post.title.rendered);
                       const cleanExcerpt = cleanHtmlContent(post.excerpt?.rendered || '');
                       const postDate = new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
