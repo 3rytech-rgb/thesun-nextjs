@@ -24,6 +24,8 @@ import SpotlightSection from '../components/home/categories/SpotlightSection';
 import CombinedSection from '../components/home/categories/CombinedSection';
 import VideoSection from '../components/home/categories/VideoSection';
 import OpinionSection from '../components/home/categories/OpinionSection';
+import { cleanTextContent, cleanHtmlContent } from '../components/home/utils/contentCleaner';
+import { formatRelativeTime } from '../components/home/utils/timeFormatter';
 
 interface HomeProps {
   posts: WPPost[];
@@ -135,7 +137,7 @@ export default function Home({
               </div>
             )}
 
-            {/* 4 stories in 3/4 width (within this column), directly under featured story */}
+            {/* 4 stories — gambar lebih tinggi, category tag + timestamp sebaris sebelum title */}
             {bottomPosts.length > 0 && (
               <div className="space-y-4 mt-6">
                 {[0, 2].map((start) => (
@@ -143,25 +145,32 @@ export default function Home({
                     {bottomPosts.slice(start, start + 2).map((post) => {
                       const catId = typeof post.categories?.[0] === 'number' ? post.categories[0] : (post.categories?.[0] as any)?.id;
                       const catName = catId ? categories.find(c => c.id === catId)?.name || '' : '';
+                      const cleanTitle = cleanHtmlContent(post.title.rendered);
+                      const cleanExcerpt = cleanHtmlContent(post.excerpt?.rendered || '');
                       const postDate = new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                       return (
                         <Link key={post.id} href={getPostUrl(post)} className="block group">
-                          <div className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col">
-                            <div className="w-full h-40 relative bg-gray-100 overflow-hidden flex-shrink-0">
+                          <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 h-full flex flex-col border border-gray-100">
+                            <div className="w-full h-56 relative bg-gray-100 overflow-hidden flex-shrink-0">
                               {(post as any).featured_media_url ? (
-                                <img src={(post as any).featured_media_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                <img src={(post as any).featured_media_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                 </div>
                               )}
-                              {catName && (
-                                <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-red-600 text-white text-[10px] font-bold uppercase tracking-wider shadow-lg">{catName}</span>
-                              )}
                             </div>
-                            <div className="p-3 flex-1 flex flex-col">
-                              <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors line-clamp-2 text-sm" dangerouslySetInnerHTML={{ __html: post.title.rendered }} />
-                              <p className="text-xs text-gray-400 mt-2">{postDate}</p>
+                            <div className="p-4 flex-1 flex flex-col">
+                              <div className="flex items-center gap-2 mb-2">
+                                {catName && (
+                                  <span className="text-[11px] font-semibold text-red-600 uppercase tracking-wider whitespace-nowrap">{catName}</span>
+                                )}
+                                <span className="text-[11px] text-gray-400 whitespace-nowrap">{postDate}</span>
+                              </div>
+                              <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors line-clamp-2 text-sm leading-snug">{cleanTitle}</h3>
+                              {cleanExcerpt && (
+                                <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{cleanExcerpt.substring(0, 100)}</p>
+                              )}
                             </div>
                           </div>
                         </Link>
