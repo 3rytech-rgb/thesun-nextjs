@@ -1,4 +1,5 @@
 import { GetStaticProps } from 'next';
+import Link from 'next/link';
 import {
   getPosts,
   getCategories,
@@ -7,6 +8,7 @@ import {
   getTags,
   getTopStories,
   getPostsByTagSlug,
+  getPostUrl,
 } from '../lib/wordpress';
 import { WPPost } from '../types/wordpress';
 import { WPCategory } from '../types/wordpress';
@@ -78,6 +80,7 @@ export default function Home({
 
   const pinnedMain = pinnedPost || posts[0];
   const pinnedMore = posts.slice(1, 5);
+  const bottomPosts = posts.slice(5, 9);
 
   const specialSections = [
     {
@@ -137,14 +140,42 @@ export default function Home({
           </div>
         </div>
 
-        {/* Row 2: 4 pinned stories in 2/2 grid */}
-        {pinnedMore.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-            {pinnedMore.map((post) => (
-              <div key={post.id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
-                <FeaturedStory pinnedPost={post} categories={categories} />
-              </div>
-            ))}
+        {/* Row 2: 4 stories in 3/4 grid — gambar, category tag, title, timestamp */}
+        {bottomPosts.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {bottomPosts.map((post) => {
+              const catId = typeof post.categories?.[0] === 'number' ? post.categories[0] : (post.categories?.[0] as any)?.id;
+              const catName = catId ? categories.find(c => c.id === catId)?.name || '' : '';
+              const postDate = new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+              return (
+                <Link key={post.id} href={getPostUrl(post)} className="block group">
+                  <div className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col">
+                    <div className="w-full h-40 relative bg-gray-100 overflow-hidden flex-shrink-0">
+                      {(post as any).featured_media_url ? (
+                        <img
+                          src={(post as any).featured_media_url}
+                          alt=""
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </div>
+                      )}
+                      {catName && (
+                        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-red-600 text-white text-[10px] font-bold uppercase tracking-wider shadow-lg">
+                          {catName}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-3 flex-1 flex flex-col">
+                      <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors line-clamp-2 text-sm" dangerouslySetInnerHTML={{ __html: post.title.rendered }} />
+                      <p className="text-xs text-gray-400 mt-2">{postDate}</p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
 
