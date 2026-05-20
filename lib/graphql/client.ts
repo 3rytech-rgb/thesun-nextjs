@@ -16,7 +16,7 @@ const httpLink = new HttpLink({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  fetch: (uri: RequestInfo, options?: RequestInit) => {
+  fetch: (uri: string | URL | Request, options?: RequestInit) => {
     return fetch(uri, {
       ...options,
       headers: {
