@@ -21,15 +21,19 @@ interface CategoryLayout5Props {
 
 export default function CategoryLayout5({ categoryColumns, categories, isLast = false }: CategoryLayout5Props) {
   const [currentRow, setCurrentRow] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const rowsPerColumn = 3;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!categoryColumns || categoryColumns.length === 0) return null;
 
   const totalRows = Math.min(...categoryColumns.map(col => col.posts?.length || 0));
   const maxRows = Math.min(totalRows, rowsPerColumn * 3);
   
-  // Untuk server rendering, selalu mulai dari row 0
-  const displayCurrentRow = 0; // Always start from 0 to avoid hydration mismatch
+  const displayCurrentRow = mounted ? currentRow : 0;
 
   const handleNext = () => {
     if (displayCurrentRow + rowsPerColumn < totalRows) {
@@ -48,7 +52,7 @@ export default function CategoryLayout5({ categoryColumns, categories, isLast = 
       {/* Header */}
       <div className="mb-8 border-b border-gray-300 pb-4">
         <h2 className="text-3xl font-bold text-gray-900">Latest Updates</h2>
-        <p className="text-gray-600 mt-2">Quick glance at what's happening around the world</p>
+        <p className="text-gray-600 mt-2">Quick glance at what&apos;s happening around the world</p>
       </div>
 
       {/* Three Column Layout */}
