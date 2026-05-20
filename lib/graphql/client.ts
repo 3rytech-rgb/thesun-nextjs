@@ -17,13 +17,18 @@ const httpLink = new HttpLink({
     'Accept': 'application/json',
   },
   fetch: (uri: string | URL | Request, options?: RequestInit) => {
-    return fetch(uri, {
+    const url = typeof uri === 'string' ? uri : uri.toString();
+    const cacheBuster = url.includes('?') ? '&_vercel=' + Date.now() : '?_vercel=' + Date.now();
+    const finalUri = typeof uri === 'string' ? url + cacheBuster : uri;
+    return fetch(finalUri, {
       ...options,
       headers: {
         ...(options?.headers as Record<string, string>),
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
         'Referer': 'https://thesun.my/',
         'Accept-Language': 'en-US,en;q=0.9,ms;q=0.8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
       },
     });
   },
