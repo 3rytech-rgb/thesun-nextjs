@@ -71,14 +71,13 @@ export default function Home({
 
   let latestPosts = [];
   if (isExclusive) {
-    latestPosts = posts.slice(0, 5);
+    latestPosts = posts.slice(0, 10);
   } else {
-    latestPosts = posts.slice(1, 6);
+    latestPosts = posts.slice(1, 11);
   }
 
-  const pinnedPosts = posts.filter(p => p.tags?.some((t: any) => typeof t === 'object' ? t.slug === 'pin' : false)).slice(0, 4);
-  const pinnedMain = pinnedPost || pinnedPosts[0] || featuredPost;
-  const pinnedMore = pinnedPosts.slice(1, 4);
+  const pinnedMain = pinnedPost || posts[0];
+  const pinnedMore = posts.slice(1, 5);
 
   const specialSections = [
     {
