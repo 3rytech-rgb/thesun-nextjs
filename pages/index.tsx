@@ -190,12 +190,7 @@ export default function Home({
 
         <GoingViralSection posts={goingViralPosts} categories={categories} />
 
-        <CombinedSection
-          malaysiaPosts={malaysiaPosts}
-          worldPosts={worldPosts}
-          businessPosts={businessPosts}
-          categories={categories}
-        />
+        <LifestyleSection posts={lifestylePosts} categories={categories} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div>
@@ -208,11 +203,16 @@ export default function Home({
 
         <BeritaSection posts={beritaPosts} categories={categories} />
 
-        <LifestyleSection posts={lifestylePosts} categories={categories} />
-
         <SportsSection posts={sportsPosts} categories={categories} isLast={true} />
 
         <SpotlightSection posts={spotlightPosts} categories={categories} />
+
+        <CombinedSection
+          malaysiaPosts={malaysiaPosts}
+          worldPosts={worldPosts}
+          businessPosts={businessPosts}
+          categories={categories}
+        />
 
         <div className="border-t-2 border-dashed border-gray-400 my-8 sm:my-12 lg:my-20"></div>
 
