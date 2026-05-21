@@ -33,61 +33,22 @@ export default function CategoryLayout6({
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const mockVideos: YouTubeVideo[] = [
-    {
-      id: { videoId: 'dQw4w9WgXcQ' },
-      snippet: {
-        title: 'Breaking News: Major Event',
-        thumbnails: { high: { url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg' } },
-        publishedAt: new Date().toISOString()
-      }
-    },
-    {
-      id: { videoId: '9bZkp7q19f0' },
-      snippet: {
-        title: 'World News Update',
-        thumbnails: { high: { url: 'https://img.youtube.com/vi/9bZkp7q19f0/maxresdefault.jpg' } },
-        publishedAt: new Date().toISOString()
-      }
-    },
-    {
-      id: { videoId: 'jNQXAC9IVRw' },
-      snippet: {
-        title: 'Sports Highlights',
-        thumbnails: { high: { url: 'https://img.youtube.com/vi/jNQXAC9IVRw/maxresdefault.jpg' } },
-        publishedAt: new Date().toISOString()
-      }
-    },
-    {
-      id: { videoId: 'hTWKbfoikeg' },
-      snippet: {
-        title: 'Technology News',
-        thumbnails: { high: { url: 'https://img.youtube.com/vi/hTWKbfoikeg/maxresdefault.jpg' } },
-        publishedAt: new Date().toISOString()
-      }
-    },
-    {
-      id: { videoId: 'kJQP7kiw5Fk' },
-      snippet: {
-        title: 'Entertainment News',
-        thumbnails: { high: { url: 'https://img.youtube.com/vi/kJQP7kiw5Fk/maxresdefault.jpg' } },
-        publishedAt: new Date().toISOString()
-      }
-    }
+    { id: { videoId: 'dQw4w9WgXcQ' }, snippet: { title: 'Breaking News: Major Event', thumbnails: { high: { url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg' } }, publishedAt: new Date().toISOString() } },
+    { id: { videoId: '9bZkp7q19f0' }, snippet: { title: 'World News Update', thumbnails: { high: { url: 'https://img.youtube.com/vi/9bZkp7q19f0/maxresdefault.jpg' } }, publishedAt: new Date().toISOString() } },
+    { id: { videoId: 'jNQXAC9IVRw' }, snippet: { title: 'Sports Highlights', thumbnails: { high: { url: 'https://img.youtube.com/vi/jNQXAC9IVRw/maxresdefault.jpg' } }, publishedAt: new Date().toISOString() } },
+    { id: { videoId: 'hTWKbfoikeg' }, snippet: { title: 'Technology News', thumbnails: { high: { url: 'https://img.youtube.com/vi/hTWKbfoikeg/maxresdefault.jpg' } }, publishedAt: new Date().toISOString() } },
+    { id: { videoId: 'kJQP7kiw5Fk' }, snippet: { title: 'Entertainment News', thumbnails: { high: { url: 'https://img.youtube.com/vi/kJQP7kiw5Fk/maxresdefault.jpg' } }, publishedAt: new Date().toISOString() } }
   ];
 
   useEffect(() => {
     const fetchVideos = async () => {
       const apiKey = 'AIzaSyCexcmkW5KuyPUttlLqK91-l0yZo-NI6iM';
-      const channelId = 'UC4FzPfZ9TQ3w4vK4zQXzMQ'; // The Sun Malaysia channel ID
       try {
         const response = await fetch(
           `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&q=the+sun+malaysia&type=video&part=snippet,id&order=date&maxResults=10`
         );
         const data = await response.json();
-        console.log('API data:', data);
-        if (data.items) {
-          setVideos(data.items);
-        }
+        if (data.items) setVideos(data.items);
       } catch (error) {
         console.error('Error fetching videos:', error);
       } finally {
@@ -104,147 +65,184 @@ export default function CategoryLayout6({
   const scrollToIndex = (index: number) => {
     if (carouselRef.current) {
       const container = carouselRef.current;
-      const itemWidth = 256; // w-64 = 16rem = 256px
-      const scrollPosition = index * itemWidth;
-      container.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+      const itemWidth = container.scrollWidth / Math.ceil(videos.length / 2);
+      container.scrollTo({ left: index * itemWidth, behavior: 'smooth' });
       setCurrentIndex(index);
     }
   };
 
   const handleNext = () => {
     if (videos.length === 0) return;
-    const nextIndex = (currentIndex + 1) % Math.ceil(videos.length / 2);
+    const total = Math.ceil(videos.length / 2);
+    const nextIndex = (currentIndex + 1) % total;
     scrollToIndex(nextIndex);
   };
 
   const handlePrev = () => {
     if (videos.length === 0) return;
-    const prevIndex = currentIndex === 0 ? Math.ceil(videos.length / 2) - 1 : currentIndex - 1;
+    const total = Math.ceil(videos.length / 2);
+    const prevIndex = currentIndex === 0 ? total - 1 : currentIndex - 1;
     scrollToIndex(prevIndex);
   };
 
   const handleScroll = () => {
     if (carouselRef.current) {
       const container = carouselRef.current;
-      const itemWidth = 256;
+      const itemWidth = container.scrollWidth / Math.ceil(videos.length / 2);
       const newIndex = Math.round(container.scrollLeft / itemWidth);
       setCurrentIndex(newIndex);
     }
   };
 
-
-
   if (loading) {
     return (
-      <div className="w-full bg-blue-900 p-6 rounded-lg">
-        <h2 className="text-2xl font-bold text-white mb-4"># {name}</h2>
-        <p className="text-white">Loading videos...</p>
-      </div>
+      <section className="relative overflow-hidden rounded-3xl p-4 sm:p-6 lg:p-8 h-full flex flex-col"
+        style={{ background: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)' }}
+      >
+        <div className="animate-pulse flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <div className="w-2 h-2 sm:w-3 sm:h-3 bg-purple-400 rounded-full"></div>
+          <div className="h-5 sm:h-6 w-20 sm:w-24 bg-white/20 rounded-lg"></div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="aspect-[9/16] bg-white/10 rounded-xl sm:rounded-2xl"></div>
+          ))}
+        </div>
+      </section>
     );
   }
 
   if (videos.length === 0) {
     return (
-      <div className="w-full bg-blue-900 p-6 rounded-lg">
-        <h2 className="text-2xl font-bold text-white mb-4"># {name}</h2>
-        <p className="text-white">No videos available.</p>
-      </div>
+      <section className="relative overflow-hidden rounded-3xl p-4 sm:p-6 lg:p-8 text-center h-full flex flex-col items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)' }}
+      >
+        <p className="text-white/60 text-sm sm:text-base lg:text-lg">No videos available yet. Check back soon!</p>
+      </section>
     );
   }
 
+  const totalSlides = Math.ceil(videos.length / 2);
+
   return (
-    <div className="w-full bg-blue-900 p-6 rounded-lg">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-white"># {name}</h2>
-        
-        {/* Navigation Buttons */}
-        <div className="flex space-x-2">
-          <button
-            onClick={handlePrev}
-            className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all duration-300 group"
-            aria-label="Previous video"
-          >
-            <svg 
-              className="w-5 h-5 text-white transform group-hover:-translate-x-0.5 transition-transform" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
-          <button
-            onClick={handleNext}
-            className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all duration-300 group"
-            aria-label="Next video"
-          >
-            <svg 
-              className="w-5 h-5 text-white transform group-hover:translate-x-0.5 transition-transform" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+    <section className="relative overflow-hidden rounded-3xl p-4 sm:p-6 lg:p-8 h-full flex flex-col"
+      style={{ background: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)' }}
+    >
+      {/* Decorative blobs */}
+      <div className="absolute -top-24 -right-24 w-48 sm:w-64 h-48 sm:h-64 bg-fuchsia-500/20 rounded-full blur-3xl"></div>
+      <div className="absolute -bottom-32 -left-20 w-60 sm:w-80 h-60 sm:h-80 bg-indigo-500/20 rounded-full blur-3xl"></div>
+      <div className="absolute top-1/2 left-1/3 w-32 sm:w-48 h-32 sm:h-48 bg-purple-500/15 rounded-full blur-3xl"></div>
+
+      {/* Floating grid dots */}
+      <div className="absolute inset-0 opacity-[0.03]" 
+        style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '30px 30px' }}>
       </div>
-      
-      {/* Carousel Container */}
-      <div className="relative">
-        <div 
-          ref={carouselRef}
-          className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide scroll-smooth"
-          onScroll={handleScroll}
-        >
-          {videos.map((video, index) => (
-            <div
-              key={video.id.videoId}
-              className="flex-shrink-0 w-64"
-            >
-              <div
-                className="relative cursor-pointer group"
-                onClick={() => handleVideoClick(video.id.videoId)}
+
+      <div className="relative z-10 flex flex-col h-full">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 flex-shrink-0">
+          <div>
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-fuchsia-400 rounded-full animate-pulse"></span>
+              <span className="text-fuchsia-300 text-[10px] sm:text-xs font-semibold uppercase tracking-widest">Watch Now</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 via-violet-300 to-indigo-300">
+              {name}
+            </h2>
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden sm:flex items-center gap-1.5">
+              {Array.from({ length: totalSlides }).map((_, i) => (
+                <button key={i} onClick={() => scrollToIndex(i)}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === currentIndex ? 'w-6 h-2 bg-white' : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/50'
+                  }`}
+                  aria-label={`Slide ${i + 1}`}
+                />
+              ))}
+            </div>
+            <div className="flex gap-1.5 sm:gap-2">
+              <button onClick={handlePrev}
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all duration-300 active:scale-90"
+                aria-label="Previous">
+                <svg className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button onClick={handleNext}
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all duration-300 active:scale-90"
+                aria-label="Next">
+                <svg className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Carousel */}
+        <div className="flex-1 relative">
+          <div ref={carouselRef} onScroll={handleScroll}
+            className="flex overflow-x-auto gap-2 sm:gap-3 lg:gap-4 pb-4 scrollbar-hide scroll-smooth snap-x snap-mandatory h-full">
+            {videos.map((video, index) => (
+              <div key={video.id.videoId}
+                className="flex-shrink-0 w-[40vw] sm:w-44 md:w-52 lg:w-64 snap-start"
               >
-                {/* Portrait Video Thumbnail */}
-                <div className="relative aspect-[9/16] overflow-hidden rounded-xl">
-                  <img
-                    src={video.snippet.thumbnails.high.url}
-                    alt={video.snippet.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                    <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                      <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
+                <div className="relative cursor-pointer group h-full flex flex-col"
+                  onClick={() => handleVideoClick(video.id.videoId)}
+                >
+                  {/* Thumbnail */}
+                  <div className="relative flex-1 aspect-[9/16] overflow-hidden rounded-xl sm:rounded-2xl ring-1 ring-white/10 group-hover:ring-fuchsia-400/50 transition-all duration-500">
+                    <img
+                      src={video.snippet.thumbnails.high.url}
+                      alt={video.snippet.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/0 to-indigo-500/0 group-hover:from-fuchsia-500/20 group-hover:to-indigo-500/20 transition-all duration-500" />
+                    
+                    {/* Play button */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl sm:rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 border border-white/20 group-hover:border-fuchsia-400/50">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Gradient bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 h-16 sm:h-20 bg-gradient-to-t from-black/80 to-transparent"></div>
+
+                    {/* Index badge */}
+                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-black/40 backdrop-blur-sm text-white text-[10px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg border border-white/10">
+                      {String(index + 1).padStart(2, '0')}
                     </div>
                   </div>
+                  
+                  {/* Title */}
+                  <h3 className="text-white text-xs sm:text-sm font-semibold mt-2 sm:mt-3 leading-snug line-clamp-2 group-hover:text-fuchsia-300 transition-colors duration-300 flex-shrink-0">
+                    {video.snippet.title}
+                  </h3>
                 </div>
-                <h3 className="text-white text-sm font-semibold mt-3 line-clamp-2 group-hover:text-blue-200 transition-colors duration-300">{video.snippet.title}</h3>
               </div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Progress Indicators */}
-        <div className="flex justify-center space-x-1.5 mt-6">
-          {Array.from({ length: Math.ceil(videos.length / 2) }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => scrollToIndex(index)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                index === currentIndex 
-                  ? 'w-8 bg-white' 
-                  : 'w-1.5 bg-white/40 hover:bg-white/60'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
+            ))}
+          </div>
+
+          {/* Mobile dots indicator */}
+          <div className="flex sm:hidden justify-center gap-1.5 mt-3 sm:mt-5">
+            {Array.from({ length: totalSlides }).map((_, i) => (
+              <button key={i} onClick={() => scrollToIndex(i)}
+                className={`rounded-full transition-all duration-300 ${
+                  i === currentIndex ? 'w-5 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/30'
+                }`}
+                aria-label={`Slide ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

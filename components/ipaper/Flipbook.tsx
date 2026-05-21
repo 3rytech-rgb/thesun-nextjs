@@ -94,10 +94,11 @@ export default function Flipbook({ pdf, onPageChange }: FlipbookProps) {
     loadTurnJS();
 
     // Cleanup
+    const currentFlipbook = flipbookRef.current;
     return () => {
-      if (turnRef.current && window.$ && flipbookRef.current) {
+      if (turnRef.current && window.$ && currentFlipbook) {
         try {
-          window.$(flipbookRef.current).turn('destroy');
+          window.$(currentFlipbook).turn('destroy');
         } catch (error) {
           console.error('Error destroying flipbook:', error);
         }

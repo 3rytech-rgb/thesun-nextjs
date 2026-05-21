@@ -6,29 +6,51 @@ import BreakingNews from './BreakingNews';
 import DesktopNav from './DesktopNav';
 import MobileSidebar from './MobileSidebar';
 import DesktopCanvasModal from './DesktopCanvasModal';
+import SearchModal from './SearchModal';
 import type { CategoryItem, BreakingNews as BreakingNewsType } from './types';
 import type { WPCategory } from '../../../types/wordpress';
 import { getPostUrl } from '../../../lib/wordpress';
 
-// Import komponen animasi baru
-
-import RayaAnimation from './rayaanimation'; // Animasi Hari Raya baru
+import WorldCup2026Animation from './worldcup2026animation';
 
 interface HeaderProps {
   categories?: WPCategory[];
+  isSidebarOpen?: boolean;
+  onSidebarToggle?: () => void;
 }
 
-export default function Header({ categories = [] }: HeaderProps) {
+export default function Header({ categories = [], isSidebarOpen: externalIsOpen, onSidebarToggle }: HeaderProps) {
   const [currentDate, setCurrentDate] = useState('');
   const [currentTime, setCurrentTime] = useState('');
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isSidebarOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const [isPaused, setIsPaused] = useState(false);
   const [breakingNews, setBreakingNews] = useState<BreakingNewsType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showRayaAnimation, setShowRayaAnimation] = useState(true); // State untuk toggle animasi raya
+  const [showWorldCup, setShowWorldCup] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
   const dropdownContainerRef = useRef<HTMLDivElement>(null);
   const marqueeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY < 80) {
+        setHeaderVisible(true);
+      } else if (currentScrollY > lastScrollY.current) {
+        setHeaderVisible(false);
+      } else {
+        setHeaderVisible(true);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Clean category names
   function cleanHtmlContent(html: string): string {
@@ -239,6 +261,7 @@ export default function Header({ categories = [] }: HeaderProps) {
       console.log('🧹 Cleaning up header');
       clearInterval(refreshInterval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Close dropdown when clicking outside
@@ -345,12 +368,11 @@ export default function Header({ categories = [] }: HeaderProps) {
         { name: 'Opinion', slug: 'opinion', id: 8 },
         { name: 'Classifieds', slug: 'classifieds', id: 10 },
         { name: 'Spotlight', slug: 'spotlight', id: 11 },
-        { name: 'Education', slug: 'education', id: 12 }
+        { name: 'Education', slug: 'education', id: 12 },
+        { name: 'Our Team', slug: '/our-team', id: 14 }
       ]
-    }
+    },
   ];
-
-  // Define categories untuk canvas (2 rows)
   const canvasCategories = {
     row1: [
       { name: 'Home', slug: '/', id: 0, hot: false, subItems: [] },
@@ -370,9 +392,12 @@ export default function Header({ categories = [] }: HeaderProps) {
         id: 9, 
         hot: false, 
         subItems: [
+          { name: 'Motoring', slug: 'motoring', id: 6 },
+          { name: 'Opinion', slug: 'opinion', id: 8 },
           { name: 'Classifieds', slug: 'classifieds', id: 10 },
           { name: 'Spotlight', slug: 'spotlight', id: 11 },
-          { name: 'Education', slug: 'education', id: 12 }
+          { name: 'Education', slug: 'education', id: 12 },
+          { name: 'Our Team', slug: '/our-team', id: 14 }
         ]
       }
     ]
@@ -383,7 +408,18 @@ export default function Header({ categories = [] }: HeaderProps) {
   };
 
   const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
+    if (onSidebarToggle) {
+      onSidebarToggle();
+    } else {
+      setInternalIsOpen(!internalIsOpen);
+    }
+  };
+  const closeSidebar = () => {
+    if (onSidebarToggle) {
+      if (isSidebarOpen) onSidebarToggle();
+    } else {
+      setInternalIsOpen(false);
+    }
   };
 
   const handleBreakingNewsHover = (hovering: boolean) => {
@@ -391,14 +427,9 @@ export default function Header({ categories = [] }: HeaderProps) {
   };
 
   return (
-    <header className="relative z-50 bg-slate-900 text-white">
-      {/* Ganti snow animation dengan komponen baru */}
+    <header className={`fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 text-white shadow-xl transition-transform duration-300 ${headerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      {showWorldCup && <WorldCup2026Animation />}
       
-      
-      {/* Animasi Hari Raya */}
-      {showRayaAnimation && <RayaAnimation />}
-      
-      {/* Main Header Content */}
       <div className="relative z-20">
         <BreakingNews
           breakingNews={breakingNews}
@@ -408,20 +439,20 @@ export default function Header({ categories = [] }: HeaderProps) {
           marqueeRef={marqueeRef}
         />
         
-        <div className="w-full py-1">
-          <div className="flex flex-col lg:flex-row justify-between items-center">
-            <div className="flex items-center mb-1 lg:mb-0">
+        <div className="w-full">
+          <div className="flex items-center justify-between px-2 lg:px-4">
+            <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
               <button
                 onClick={toggleSidebar}
-                className="mr-1 p-1 rounded-lg hover:bg-slate-800 transition-colors duration-200 group"
+                className="p-1.5 rounded-lg hover:bg-slate-800 transition-colors duration-200 group"
                 aria-label="Toggle menu"
               >
-                <div className="w-4 h-4 flex flex-col justify-between">
+                <div className="w-5 h-4 flex flex-col justify-between">
                   <span className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 ${
                     isSidebarOpen ? 'rotate-45 translate-y-1.5' : ''
                   }`}></span>
                   <span className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 ${
-                    isSidebarOpen ? 'opacity-0' : 'opacity-100'
+                    isSidebarOpen ? 'opacity-0' : ''
                   }`}></span>
                   <span className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 ${
                     isSidebarOpen ? '-rotate-45 -translate-y-1.5' : ''
@@ -429,78 +460,72 @@ export default function Header({ categories = [] }: HeaderProps) {
                 </div>
               </button>
               
-              <Link href="/" className="inline-block">
-                <div className="flex items-center space-x-1">
-                   <div className="relative">
-                    <img 
-                      src="/images/thesun-raya.png"
-                      alt="THE SUN MALAYSIA"
-                      className="h-12 lg:h-14 w-auto cursor-pointer relative z-10 transform hover:scale-105 transition-transform duration-300 shadow-lg"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  </div>
-                  <div className="hidden">
-                    <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-red-600 to-red-500 text-white px-3 py-1.5 rounded-xl">
-                      THE SUN
-                    </h1>
-                    <p className="text-blue-200 text-xs mt-0.5 text-center">MALAYSIA</p>
-                  </div>
+              <Link href="/" className="inline-block flex-shrink-0">
+                <img 
+                  src="/images/THESUN5.png"
+                  alt="THE SUN MALAYSIA"
+                  className="h-20 sm:h-24 md:h-28 lg:h-36 w-auto cursor-pointer hover:opacity-90 transition-opacity"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                <div className="hidden">
+                  <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-red-600 to-red-500 text-white px-3 py-1.5 rounded-xl">
+                    THE SUN
+                  </h1>
                 </div>
               </Link>
+            </div>
 
-              {/* Raya Animation Toggle Button - Modern */}
+            <DesktopNav
+              mainNavItems={mainNavItems}
+              activeDropdown={activeDropdown}
+              toggleDropdown={toggleDropdown}
+              setActiveDropdown={setActiveDropdown}
+              dropdownContainerRef={dropdownContainerRef}
+            />
+
+            <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
               <button
-                onClick={() => setShowRayaAnimation(!showRayaAnimation)}
-                className="ml-1 p-0.5 rounded-lg hover:bg-slate-800/50 transition-all duration-300 group relative"
-                aria-label={showRayaAnimation ? "Disable Raya animation" : "Enable Raya animation"}
-                title={showRayaAnimation ? "Disable Hari Raya animation" : "Enable Hari Raya animation"}
+                onClick={() => setSearchOpen(true)}
+                className="p-2 rounded-lg hover:bg-slate-800/50 transition-all duration-300 text-white/70 hover:text-white"
+                aria-label="Search"
               >
-                <div className="relative w-3 h-3">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className={`w-2 h-2 rounded-sm transition-all duration-500 ${
-                      showRayaAnimation 
-                        ? 'bg-gradient-to-br from-emerald-400 to-cyan-400 shadow-[0_0_3px_rgba(52,211,153,0.5)] rotate-45' 
-                        : 'bg-gradient-to-br from-slate-400 to-slate-500'
-                    }`}></div>
-                  </div>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+              <div className="text-right hidden lg:block">
+                <div className="text-xs font-medium" suppressHydrationWarning>
+                  {currentDate || 'Loading...'}
                 </div>
+                <div className="text-blue-200 text-xs" suppressHydrationWarning>
+                  {currentTime || 'Loading...'}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowWorldCup(!showWorldCup)}
+                className="p-1 rounded-lg hover:bg-slate-800/50 transition-all duration-300"
+                aria-label={showWorldCup ? "Disable World Cup animation" : "Enable World Cup animation"}
+                title={showWorldCup ? "World Cup 2026: ON" : "World Cup 2026: OFF"}
+              >
+                <div className={`w-3.5 h-3.5 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 transition-all duration-300 ${
+                  showWorldCup ? 'shadow-[0_0_6px_rgba(251,191,36,0.8)] scale-110' : 'opacity-40'
+                }`}></div>
               </button>
             </div>
-            
-            <div className="text-center lg:text-right mb-1 lg:mb-0">
-               <div className="text-xs font-medium" suppressHydrationWarning>
-                 {currentDate || 'Loading...'}
-               </div>
-               <div className="text-blue-200 text-xs" suppressHydrationWarning>
-                 {currentTime || 'Loading...'}
-               </div>
-            </div>
           </div>
-          
-          <DesktopNav
-            mainNavItems={mainNavItems}
-            activeDropdown={activeDropdown}
-            toggleDropdown={toggleDropdown}
-            setActiveDropdown={setActiveDropdown}
-            dropdownContainerRef={dropdownContainerRef}
-          />
         </div>
       </div>
 
-      <MobileSidebar 
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        mainNavItems={mainNavItems}
-      />
-
       <DesktopCanvasModal 
         isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
+        onClose={closeSidebar}
         canvasCategories={canvasCategories}
       />
+
+      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 }

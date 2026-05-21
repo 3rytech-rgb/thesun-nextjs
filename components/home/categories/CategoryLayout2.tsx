@@ -26,6 +26,25 @@ export default function CategoryLayout2({
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const postsPerView = 3;
 
+  const totalSlides = Math.ceil(posts.length / postsPerView);
+
+  const nextSlide = useCallback(() => {
+    setDirection('right');
+    setCurrentIndex((prevIndex) =>
+      prevIndex === totalSlides - 1 ? 0 : prevIndex + 1
+    );
+  }, [totalSlides]);
+
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+
+    const interval = setInterval(() => {
+      nextSlide();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, nextSlide]);
+
   if (posts.length === 0) return null;
 
   const getPostCategoryName = (post: WPPostWithMedia, allCategories: WPCategory[]): string => {
@@ -39,15 +58,6 @@ export default function CategoryLayout2({
     return category ? cleanTextContent(category.name) : 'Uncategorized';
   };
 
-  const totalSlides = Math.ceil(posts.length / postsPerView);
-  
-  const nextSlide = useCallback(() => {
-    setDirection('right');
-    setCurrentIndex((prevIndex) => 
-      prevIndex === totalSlides - 1 ? 0 : prevIndex + 1
-    );
-  }, [totalSlides]);
-
   const prevSlide = () => {
     setDirection('left');
     setCurrentIndex((prevIndex) => 
@@ -59,17 +69,6 @@ export default function CategoryLayout2({
     setDirection(index > currentIndex ? 'right' : 'left');
     setCurrentIndex(index);
   };
-
-  // Auto play functionality
-  useEffect(() => {
-    if (!isAutoPlaying) return;
-
-    const interval = setInterval(() => {
-      nextSlide();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, nextSlide]);
 
   const visiblePosts = posts.slice(
     currentIndex * postsPerView,

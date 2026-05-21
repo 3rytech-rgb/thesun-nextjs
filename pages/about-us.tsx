@@ -15,10 +15,10 @@ export default function AboutUs() {
               <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500 p-6 mb-10 rounded-xl">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Story</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  Since our launch in 1993, we have been a cornerstone of Malaysian journalism, providing millions of readers with reliable, balanced, and concise news. On April 8, 2002, we solidified our place as Malaysia's first national free daily, making quality journalism accessible to everyone.
+                  Since our launch in 1993, we have been a cornerstone of Malaysian journalism, providing millions of readers with reliable, balanced, and concise news. On April 8, 2002, we solidified our place as Malaysia&apos;s first national free daily, making quality journalism accessible to everyone.
                 </p>
                 <p className="text-gray-700 leading-relaxed">
-                  The Sun Malaysia is published by Sun Media Corporation Sdn Bhd (221220-K). With our headquarters in Petaling Jaya, Selangor, we are committed to contributing to Malaysia's dynamic media landscape.
+                  The Sun Malaysia is published by Sun Media Corporation Sdn Bhd (221220-K). With our headquarters in Petaling Jaya, Selangor, we are committed to contributing to Malaysia&apos;s dynamic media landscape.
                 </p>
               </div>
 
@@ -47,7 +47,7 @@ export default function AboutUs() {
                     <h3 className="text-xl font-bold text-gray-900">Our Vision</h3>
                   </div>
                   <p className="text-gray-700">
-                    To be Malaysia's most trusted and accessible news source, delivering quality journalism that informs, educates, and engages readers across all platforms.
+                    To be Malaysia&apos;s most trusted and accessible news source, delivering quality journalism that informs, educates, and engages readers across all platforms.
                   </p>
                 </div>
               </div>
@@ -91,7 +91,7 @@ export default function AboutUs() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">A Legacy of Excellence</h2>
                 <div className="space-y-4">
                   <p className="text-gray-700 leading-relaxed">
-                    The Sun's journey is one of continuous growth and adaptation. Starting as a paid newspaper, we re-emerged in 2002 with a groundbreaking free distribution model, which transformed the local media landscape.
+                    The Sun&apos;s journey is one of continuous growth and adaptation. Starting as a paid newspaper, we re-emerged in 2002 with a groundbreaking free distribution model, which transformed the local media landscape.
                   </p>
                   <p className="text-gray-700 leading-relaxed">
                     Over the years, our dedication to public service journalism and insightful opinion writing has been recognized with multiple awards from the Society of Publishers in Asia (SOPA).
@@ -111,7 +111,7 @@ export default function AboutUs() {
                   <div className="text-center p-6 bg-white rounded-lg shadow-sm">
                     <div className="text-3xl font-bold text-red-600 mb-2">2002</div>
                     <h3 className="font-bold text-gray-900 mb-2">Transformation</h3>
-                    <p className="text-gray-700 text-sm">Became Malaysia's first free national daily</p>
+                    <p className="text-gray-700 text-sm">Became Malaysia&apos;s first free national daily</p>
                   </div>
                   
                   <div className="text-center p-6 bg-white rounded-lg shadow-sm">

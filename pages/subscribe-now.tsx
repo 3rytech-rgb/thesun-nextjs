@@ -1,4 +1,5 @@
 import { GetStaticProps } from 'next';
+import Script from 'next/script';
 import Layout from '../components/layout/Layout';
 import Breadcrumb from '../components/common/Breadcrumb';
 import { WPCategory } from '../types/wordpress';
@@ -26,7 +27,7 @@ export default function SubscribeNow({ categories }: Props) {
                     <div id="" className="portlet-boundary portlet-static-end htmlcontainer-portlet">
                       <div>
                         <iframe src="https://www.cognitoforms.com/f/n-LP1BRmAUebkBV_v5ZoYQ/27" style={{ border: 0, width: '100%' }} height="2447"></iframe>
-                        <script src="https://www.cognitoforms.com/f/iframe.js"></script>
+                        <Script src="https://www.cognitoforms.com/f/iframe.js" strategy="afterInteractive" />
                       </div>
                     </div>
                   </div>

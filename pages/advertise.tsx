@@ -13,7 +13,7 @@ export default function Advertise() {
             
             <div className="prose prose-lg max-w-none mb-12">
               <p className="text-gray-700 leading-relaxed mb-8 text-lg">
-                Reach millions of engaged readers across Malaysia with The Sun's comprehensive advertising solutions.
+                Reach millions of engaged readers across Malaysia with The Sun&apos;s comprehensive advertising solutions.
                 Our targeted approach ensures your message reaches the right audience at the right time.
               </p>
 

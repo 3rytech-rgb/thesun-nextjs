@@ -17,6 +17,7 @@ import {
   getShortenedCategorySlug
 } from '@/lib/wordpress';
 import { cleanSlug, cleanCategorySlug } from '@/utils/slugCleaner';
+import he from 'he';
 import {
   WPPost,
   WPPostWithMedia,
@@ -27,6 +28,7 @@ import {
 import Layout from '@/components/layout/Layout';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import NetworkImage from '@/components/common/NetworkImage';
+import { TimeAgo } from '@/components/common/TimeAgo';
 import { AdWidget } from '@/components/ads/AdWidget';
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
@@ -39,55 +41,6 @@ interface PostProps {
   initialMorePosts: WPPostWithMedia[];
   authorSlug?: string; // TAMBAH INI
   currentCategory: WPCategory; // TAMBAH INI
-}
-
-// Helper function untuk format date
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-  const diffMinutes = Math.floor(diffTime / (1000 * 60));
-
-  // Format hari, tarikh dan time
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  
-  const dayName = days[date.getDay()];
-  const day = date.getDate();
-  const month = months[date.getMonth()];
-  const year = date.getFullYear();
-  
-  // Format time ago
-  let timeAgo = '';
-  if (diffDays > 0) {
-    timeAgo = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  } else if (diffHours > 0) {
-    timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  } else {
-    timeAgo = `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-  }
-  
-  return `${dayName}, ${day} ${month} ${year}, ${timeAgo}`;
-}
-
-// Helper function untuk format time only (untuk latest stories dan more stories)
-function formatTimeOnly(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-  const diffMinutes = Math.floor(diffTime / (1000 * 60));
-
-  if (diffDays > 0) {
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  } else if (diffHours > 0) {
-    return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  } else {
-    return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-  }
 }
 
 // Helper function untuk extract author
@@ -105,7 +58,7 @@ function getAuthor(post: WPPostWithMedia): WPAuthor | string {
       job_title: post._embedded.author[0].job_title || '',
       display_name: post._embedded.author[0].name || post._embedded.author[0].display_name || 'Penulis',
       avatar_url: {
-        url: post._embedded.author[0].avatar_urls?.['96'] || post._embedded.author[0].avatar_url?.url || '/default-avatar.png',
+        url: post._embedded.author[0].avatar_urls?.['96'] || post._embedded.author[0].avatar_url?.url || '',
         url2x: post._embedded.author[0].avatar_urls?.['2*96'] || post._embedded.author[0].avatar_url?.url2x || ''
       },
       author_category: post._embedded.author[0].author_category || '',
@@ -132,58 +85,12 @@ function getAuthorSlug(post: WPPostWithMedia): string | null {
 // Decode HTML entities and special characters from content with multiple passes
 function cleanHtmlContent(html: string): string {
   if (!html || typeof html !== 'string') return '';
-
-  let result = html;
-
-  // Multiple passes to handle nested/double-encoded entities
-  for (let pass = 0; pass < 3; pass++) {
-    result = result
-      // Step 1: Decode numeric HTML entities (decimal and hexadecimal)
-      .replace(/&#(\d+);/g, (_, dec) => {
-        const code = parseInt(dec, 10);
-        return code >= 0 && code <= 0x10FFFF ? String.fromCharCode(code) : '';
-      })
-      .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
-        const code = parseInt(hex, 16);
-        return code >= 0 && code <= 0x10FFFF ? String.fromCharCode(code) : '';
-      })
-
-      // Step 2: Decode essential named entities (in correct order)
-      .replace(/&amp;/g, '&')
-      .replace(/&#038;/g, '&')  // Alternative ampersand
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-
-      // Step 3: Decode all quote and apostrophe variants
-      .replace(/&#39;/g, "'")    // Decimal apostrophe
-      .replace(/&#x27;/g, "'")   // Hex apostrophe
-      .replace(/&apos;/g, "'")   // Named apostrophe
-      .replace(/&#8216;/g, "'")  // Left single quotation mark
-      .replace(/&#8217;/g, "'")  // Right single quotation mark
-      .replace(/&#8220;/g, '"')  // Left double quotation mark
-      .replace(/&#8221;/g, '"')  // Right double quotation mark
-
-      // Step 4: Decode whitespace and special characters
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&#160;/g, ' ')   // Non-breaking space
-      .replace(/&#8211;/g, '–')  // En dash
-      .replace(/&#8212;/g, '—')  // Em dash
-      .replace(/&#8230;/g, '…')  // Horizontal ellipsis
-
-      // Step 5: Remove any remaining unhandled named entities
-      .replace(/&[a-zA-Z][a-zA-Z0-9]*;?/g, '');
-  }
-
-  // Final cleanup
-  return result.trim();
+  return he.decode(html).trim();
 }
 
 // Strip HTML tags and decode entities for plain text content
 function cleanTextContent(text: string): string {
   if (!text || typeof text !== 'string') return '';
-
-  // Remove HTML tags first, then decode entities
   return cleanHtmlContent(text.replace(/<[^>]*>/g, ''));
 }
 
@@ -227,56 +134,24 @@ const AuthorSection = ({ post }: { post: WPPostWithMedia }) => {
     );
   }
 
+  if (typeof author === 'string') {
+    return (
+      <div className="flex items-center">
+        <span className="font-bold text-xl text-gray-900">The Sun Webdesk</span>
+      </div>
+    );
+  }
+
   const displayName = cleanTextContent(author.display_name);
-  const avatar = author.avatar_url?.url || '/default-avatar.png';
 
   return (
     <div className="flex items-center">
       {authorSlug ? (
-        <Link
-          href={`/author/${authorSlug}`}
-          className="flex items-center hover:opacity-80 transition-opacity group"
-        >
-          <NetworkImage
-            src={avatar}
-            alt={displayName}
-            width={56}
-            height={56}
-            className="rounded-full mr-4 border-2 border-white shadow-lg group-hover:border-red-300 transition-colors"
-          />
-          <div>
-            <p className="font-bold text-xl text-gray-900 group-hover:text-red-600 transition-colors">
-              {displayName}
-            </p>
-            {author.job_title && (
-              <p className="text-base text-gray-600">{author.job_title}</p>
-            )}
-          </div>
-          <svg
-            className="w-5 h-5 ml-3 text-gray-400 group-hover:text-red-500 transition-colors"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
+        <Link href={`/author/${authorSlug}`} className="hover:opacity-80 transition-opacity">
+          <span className="font-bold text-xl text-gray-900 hover:text-red-600 transition-colors">{displayName}</span>
         </Link>
       ) : (
-        <div className="flex items-center">
-          <NetworkImage
-            src={avatar}
-            alt={displayName}
-            width={56}
-            height={56}
-            className="rounded-full mr-4 border-2 border-white shadow-lg"
-          />
-          <div>
-            <p className="font-bold text-xl text-gray-900">{displayName}</p>
-            {author.job_title && (
-              <p className="text-base text-gray-600">{author.job_title}</p>
-            )}
-          </div>
-        </div>
+        <span className="font-bold text-xl text-gray-900">{displayName}</span>
       )}
     </div>
   );
@@ -310,14 +185,14 @@ const LatestStories = ({ posts }: { posts: WPPostWithMedia[] }) => {
               </div>
 
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-2 line-clamp-2 hover:text-red-600 transition-colors">
+                <h3 className="font-semibold text-gray-900 text-base leading-tight mb-2 line-clamp-2 hover:text-red-600 transition-colors">
                    <Link href={generatePostUrl(post)}>
                     {cleanTextContent(post.title.rendered)}
                   </Link>
                 </h3>
 
                 <div className="flex items-center text-xs text-gray-500">
-                  <span>{formatTimeOnly(post.date)}</span>
+                  <TimeAgo dateString={post.date} />
                 </div>
               </div>
             </div>
@@ -430,19 +305,19 @@ const MoreStoriesSection = ({
                 )}
 
                 <div className="p-5">
-                  <h3 className="font-bold text-gray-900 text-lg mb-3 leading-tight hover:text-red-600 transition-colors line-clamp-2">
+                  <h3 className="font-bold text-gray-900 text-xl mb-3 leading-tight hover:text-red-600 transition-colors line-clamp-2">
                     <Link href={generatePostUrl(post)}>
                       {cleanTextContent(post.title.rendered)}
                     </Link>
                   </h3>
 
-                  <div className="flex items-center text-sm text-gray-500 mb-3">
-                    <span>{formatTimeOnly(post.date)}</span>
+                  <div className="flex items-center text-base text-gray-500 mb-3">
+                    <TimeAgo dateString={post.date} />
                   </div>
 
                   {post.excerpt?.rendered && (
                     <div
-                      className="text-gray-600 text-base leading-relaxed line-clamp-3 content-font"
+                      className="text-gray-600 text-lg leading-relaxed line-clamp-3 content-font"
                       dangerouslySetInnerHTML={{
                         __html: cleanHtmlContent(
                           post.excerpt.rendered.replace(/<[^>]*>/g, '').substring(0, 150) + '...'
@@ -486,7 +361,7 @@ const MoreStoriesSection = ({
 
         {allPostsLoaded && (
           <div className="text-center mt-12 pt-6 border-t border-gray-300">
-            <p className="text-gray-600">You've reached the end of the articles</p>
+            <p className="text-gray-600">You&apos;ve reached the end of the articles</p>
           </div>
         )}
       </div>
@@ -729,34 +604,34 @@ export default function Post({
 
       processedContent = processedContent.replace(
         /<p>/g,
-        '<p class="text-gray-700 leading-relaxed mb-6 text-xl max-w-4xl mx-auto content-font">'
+        '<p class="text-gray-700 leading-relaxed mb-6 text-2xl max-w-4xl mx-auto content-font">'
       );
 
       processedContent = processedContent.replace(
         /<h1>/g,
-        '<h1 class="text-4xl font-bold text-gray-900 mt-10 mb-6 max-w-4xl mx-auto">'
+        '<h1 class="text-5xl font-bold text-gray-900 mt-10 mb-6 max-w-4xl mx-auto">'
       );
       processedContent = processedContent.replace(
         /<h2>/g,
-        '<h2 class="text-4xl font-bold text-gray-900 mt-10 mb-6 max-w-4xl mx-auto">'
+        '<h2 class="text-5xl font-bold text-gray-900 mt-10 mb-6 max-w-4xl mx-auto">'
       );
       processedContent = processedContent.replace(
         /<h3>/g,
-        '<h3 class="text-2xl font-bold text-gray-900 mt-6 mb-3 max-w-4xl mx-auto">'
+        '<h3 class="text-3xl font-bold text-gray-900 mt-6 mb-3 max-w-4xl mx-auto">'
       );
 
       processedContent = processedContent.replace(
         /<ul>/g,
-        '<ul class="list-disc list-inside mb-6 text-gray-700 text-xl max-w-4xl mx-auto content-font">'
+        '<ul class="list-disc list-inside mb-6 text-gray-700 text-2xl max-w-4xl mx-auto content-font">'
       );
       processedContent = processedContent.replace(
         /<ol>/g,
-        '<ol class="list-decimal list-inside mb-6 text-gray-700 text-xl max-w-4xl mx-auto content-font">'
+        '<ol class="list-decimal list-inside mb-6 text-gray-700 text-2xl max-w-4xl mx-auto content-font">'
       );
 
       processedContent = processedContent.replace(
         /<blockquote>/g,
-        '<blockquote class="border-l-4 border-red-500 pl-4 italic text-gray-600 my-6 text-xl max-w-4xl mx-auto content-font">'
+        '<blockquote class="border-l-4 border-red-500 pl-4 italic text-gray-600 my-6 text-2xl max-w-4xl mx-auto content-font">'
       );
 
       // Check if author is AFP, Reuters, or Bernama and add suffix to content
@@ -802,7 +677,7 @@ export default function Post({
 
       setContent(processedContent);
     }
-  }, [post.content.rendered]);
+  }, [post, post.content.rendered]);
 
   const cleanTitle = cleanTextContent(post.title.rendered);
 
@@ -828,7 +703,7 @@ export default function Post({
                                <Link
                                  key={index}
                                  href={`/category/${category?.slug || 'news'}`}
-                                 className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white text-lg px-6 py-2 rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300"
+                                 className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white text-xl px-6 py-2 rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300"
                                >
                                  {category ? cleanTextContent(category.name) : 'Uncategorized'}
                                </Link>
@@ -881,7 +756,7 @@ export default function Post({
                           <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          <span className="font-bold text-lg">{formatDate(post.date)}</span>
+                          <span className="font-bold text-lg"><TimeAgo dateString={post.date} format="full" /></span>
                         </div>
                         
                         {/* Share Button */}
@@ -1015,19 +890,17 @@ export default function Post({
                      {/* 5. Content */}
                     {content && (
                       <div
-                        className="prose prose-lg max-w-none content-font 
-                          prose-p:text-lg prose-p:leading-relaxed prose-p:tracking-wide prose-p:mb-6
-                          prose-h1:text-4xl prose-h1:leading-tight prose-h1:tracking-tight prose-h1:mb-6 prose-h1:mt-10
-                          prose-h2:text-3xl prose-h2:leading-snug prose-h2:tracking-normal prose-h2:mb-5 prose-h2:mt-8
-                          prose-h3:text-2xl prose-h3:leading-normal prose-h3:tracking-normal prose-h3:mb-4 prose-h3:mt-7
-                          prose-h4:text-xl prose-h4:leading-normal prose-h4:tracking-wide prose-h4:mb-3 prose-h4:mt-6
-                          prose-h5:text-lg prose-h5:leading-relaxed prose-h5:tracking-wide prose-h5:mb-3 prose-h5:mt-5
-                          prose-h6:text-base prose-h6:leading-relaxed prose-h6:tracking-wide prose-h6:mb-2 prose-h6:mt-4
-                          prose-ul:text-lg prose-ul:leading-relaxed prose-ul:tracking-wide prose-ul:mb-6
-                          prose-ol:text-lg prose-ol:leading-relaxed prose-ol:tracking-wide prose-ol:mb-6
+                        className="prose prose-2xl max-w-none content-font 
+                          prose-p:text-3xl prose-p:leading-[1.8] prose-p:tracking-wide prose-p:mb-8
+                          prose-h3:text-3xl prose-h3:leading-normal prose-h3:tracking-normal prose-h3:mb-4 prose-h3:mt-7
+                          prose-h4:text-2xl prose-h4:leading-normal prose-h4:tracking-wide prose-h4:mb-3 prose-h4:mt-6
+                          prose-h5:text-xl prose-h5:leading-relaxed prose-h5:tracking-wide prose-h5:mb-3 prose-h5:mt-5
+                          prose-h6:text-lg prose-h6:leading-relaxed prose-h6:tracking-wide prose-h6:mb-2 prose-h6:mt-4
+                          prose-ul:text-3xl prose-ul:leading-relaxed prose-ul:tracking-wide prose-ul:mb-6
+                          prose-ol:text-3xl prose-ol:leading-relaxed prose-ol:tracking-wide prose-ol:mb-6
                           prose-li:mb-3 prose-li:tracking-wide
-                          prose-blockquote:text-xl prose-blockquote:leading-loose prose-blockquote:tracking-wide prose-blockquote:my-8
-                          prose-figcaption:text-sm prose-figcaption:leading-relaxed prose-figcaption:tracking-wider"
+                          prose-blockquote:text-2xl prose-blockquote:leading-loose prose-blockquote:tracking-wide prose-blockquote:my-8
+                          prose-figcaption:text-base prose-figcaption:leading-relaxed prose-figcaption:tracking-wider"
                         dangerouslySetInnerHTML={{ __html: content }}
                       />
                     )}

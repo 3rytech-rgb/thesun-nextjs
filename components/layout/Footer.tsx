@@ -121,7 +121,7 @@ export default function Footer() {
                   className="h-16 w-auto"
                 />
                 <p className="text-gray-300 leading-relaxed mt-3 max-w-xs text-sm">
-                  Malaysia's leading news source delivering accurate, timely, and comprehensive coverage
+                  Malaysia&apos;s leading news source delivering accurate, timely, and comprehensive coverage
                   of news, sports, entertainment, and current events across Malaysia and globally.
                 </p>
              </div>

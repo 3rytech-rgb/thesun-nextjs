@@ -82,14 +82,7 @@ export function AdWidget({ type, widgetId, containerId }: AdWidgetProps) {
     }
   }, [type, widgetId, containerId, isClient]);
 
-  // Only render on client side
-  if (!isClient) {
-    return (
-      <div className="ad-widget">
-        <div className="h-32 bg-gray-100 animate-pulse rounded"></div>
-      </div>
-    );
-  }
+  if (!isClient) return null;
 
   if (type === 'mgwidget' && widgetId) {
     return (

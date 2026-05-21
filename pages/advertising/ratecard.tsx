@@ -22,7 +22,7 @@ export default function RateCard({ categories }: Props) {
           Contact our Advertising & Marketing Team for Print and Online
         </p>
         <p className="mb-4">
-          Malaysia's leading news source delivering accurate, timely, and comprehensive coverage
+          Malaysia&apos;s leading news source delivering accurate, timely, and comprehensive coverage
           of news, sports, entertainment, and current events across Malaysia and globally.
         </p>
         <p className="mb-4">

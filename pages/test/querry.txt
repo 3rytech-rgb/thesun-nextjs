@@ -1,0 +1,702 @@
+=========================================================================
+            THE SUN GRAPHQL QUERIES
+            Endpoint: https://thesun.my/thesun-api
+            WordPress WPGraphQL IDE
+=========================================================================
+
+Panduan:
+1. Install plugin "WPGraphQL" dalam WordPress admin
+2. Pergi ke menu GraphQL → GraphiQL IDE
+3. Paste query di bawah satu persatu
+4. Klik butang "Execute Query" (▶)
+
+=========================================================================
+QUERY 1: BASIC POSTS (Simple - dapatkan post terkini)
+=========================================================================
+
+query GetRecentPosts {
+  posts(first: 10) {
+    nodes {
+      id
+      title
+      slug
+      date
+      excerpt
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 2: POSTS DENGAN FEATURED IMAGE (untuk homepage)
+=========================================================================
+
+query GetPostsWithImages {
+  posts(first: 10) {
+    nodes {
+      id
+      title
+      slug
+      excerpt
+      date
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+          mediaDetails {
+            width
+            height
+          }
+        }
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 3: POSTS DENGAN CATEGORIES & TAGS (untuk artikel page)
+=========================================================================
+
+query GetPostsWithCategories {
+  posts(first: 10) {
+    nodes {
+      id
+      title
+      slug
+      date
+      excerpt
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
+      categories {
+        nodes {
+          id
+          name
+          slug
+        }
+      }
+      tags {
+        nodes {
+          id
+          name
+          slug
+        }
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 4: SINGLE POST COMPLETE (untuk artikel detail page)
+=========================================================================
+
+query GetSinglePost {
+  post(id: "johor-is-top-spot-for-investment-in-2026", idType: SLUG) {
+    id
+    slug
+    databaseId
+    title
+    content
+    excerpt
+    date
+    modified
+    status
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+        mediaDetails {
+          width
+          height
+          fileSize
+        }
+      }
+    }
+    categories {
+      nodes {
+        id
+        databaseId
+        name
+        slug
+        count
+        parent {
+          node {
+            id
+            name
+            slug
+          }
+        }
+      }
+    }
+    tags {
+      nodes {
+        id
+        databaseId
+        name
+        slug
+      }
+    }
+    author {
+      node {
+        id
+        name
+        description
+        avatar {
+          url
+          width
+          height
+        }
+      }
+    }
+    commentCount
+    commentStatus
+    isSticky
+    link
+    slug
+  }
+}
+
+
+=========================================================================
+QUERY 5: ALL CATEGORIES (untuk navigation & category pages)
+=========================================================================
+
+query GetAllCategories {
+  categories(first: 100) {
+    nodes {
+      id
+      databaseId
+      name
+      slug
+      count
+      parent {
+        node {
+          id
+          databaseId
+          name
+          slug
+        }
+      }
+      children(first: 50) {
+        nodes {
+          id
+          databaseId
+          name
+          slug
+          count
+        }
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 6: POSTS BY CATEGORY (untuk category page)
+=========================================================================
+
+query GetPostsByCategory($categoryId: Int = 1) {
+  posts(where: {categoryId: $categoryId}, first: 10) {
+    nodes {
+      id
+      title
+      slug
+      date
+      excerpt
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
+      categories {
+        nodes {
+          name
+          slug
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 7: ALL TAGS
+=========================================================================
+
+query GetAllTags {
+  tags(first: 100) {
+    nodes {
+      id
+      databaseId
+      name
+      slug
+      count
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 8: POSTS BY TAG (untuk tag page)
+=========================================================================
+
+query GetPostsByTag($tagId: Int = 1) {
+  posts(where: {tagId: $tagId}, first: 10) {
+    nodes {
+      id
+      title
+      slug
+      date
+      excerpt
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
+      tags {
+        nodes {
+          name
+          slug
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 9: SEARCH POSTS
+=========================================================================
+
+query SearchPosts($searchTerm: String = "johor") {
+  posts(where: {search: $searchTerm}, first: 10) {
+    nodes {
+      id
+      title
+      slug
+      date
+      excerpt
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 10: POSTS WITH PAGINATION (untuk infinite scroll / load more)
+=========================================================================
+
+query GetPostsPaginated($first: Int = 10, $after: String) {
+  posts(first: $first, after: $after) {
+    nodes {
+      id
+      title
+      slug
+      date
+      excerpt
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
+      categories {
+        nodes {
+          name
+          slug
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 11: ALL PAGES (untuk static pages)
+=========================================================================
+
+query GetAllPages {
+  pages(first: 20) {
+    nodes {
+      id
+      databaseId
+      title
+      slug
+      date
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 12: SINGLE PAGE BY SLUG
+=========================================================================
+
+query GetPageBySlug($slug: ID! = "about-us") {
+  page(id: $slug, idType: URI) {
+    id
+    databaseId
+    title
+    content
+    slug
+    featuredImage {
+      node {
+        sourceUrl
+        altText
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 13: ALL USERS/AUTHORS
+=========================================================================
+
+query GetAllAuthors {
+  users(first: 20) {
+    nodes {
+      id
+      databaseId
+      name
+      description
+      slug
+      avatar {
+        url
+        width
+        height
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 14: POSTS BY AUTHOR (untuk author page)
+=========================================================================
+
+query GetPostsByAuthor($authorId: Int = 1) {
+  posts(where: {author: $authorId}, first: 10) {
+    nodes {
+      id
+      title
+      slug
+      date
+      excerpt
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
+      author {
+        node {
+          name
+          avatar {
+            url
+          }
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 15: MEDIA LIBRARY
+=========================================================================
+
+query GetMediaLibrary {
+  mediaItems(first: 20) {
+    nodes {
+      id
+      databaseId
+      sourceUrl
+      altText
+      title
+      caption
+      description
+      mediaDetails {
+        width
+        height
+        file
+        fileSize
+        sizes {
+          name
+          sourceUrl
+          width
+          height
+          fileSize
+        }
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 16: SINGLE MEDIA ITEM
+=========================================================================
+
+query GetMediaItem($mediaId: Int = 1) {
+  mediaItem(id: $mediaId, idType: DATABASE_ID) {
+    id
+    databaseId
+    sourceUrl
+    altText
+    title
+    caption
+    description
+    mediaDetails {
+      width
+      height
+      file
+      fileSize
+      sizes {
+        name
+        sourceUrl
+        width
+        height
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 17: STICKY POSTS (post yang di-pin)
+=========================================================================
+
+query GetStickyPosts {
+  posts(where: {stati: STICKY}, first: 5) {
+    nodes {
+      id
+      title
+      slug
+      date
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
+      categories {
+        nodes {
+          name
+          slug
+        }
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 18: MENU ITEMS (jika WPGraphQL Menus di-enabled)
+=========================================================================
+
+query GetPrimaryMenu {
+  menu(id: "primary", idType: NAME) {
+    id
+    databaseId
+    name
+    slug
+    menuItems(first: 50) {
+      nodes {
+        id
+        databaseId
+        label
+        url
+        path
+        target
+        parentId
+        childItems(first: 20) {
+          nodes {
+            id
+            databaseId
+            label
+            url
+            path
+            target
+          }
+        }
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 19: LATEST POSTS BY DATE RANGE (untuk latest news section)
+=========================================================================
+
+query GetLatestPosts {
+  posts(first: 6, where: {orderby: {field: DATE, order: DESC}}) {
+    nodes {
+      id
+      title
+      slug
+      date
+      excerpt
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
+      categories {
+        nodes {
+          name
+          slug
+        }
+      }
+      author {
+        node {
+          name
+        }
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 20: POSTS WITH SPECIFIC STATUS
+=========================================================================
+
+query GetPublishedPosts {
+  posts(where: {stati: PUBLISH}, first: 10) {
+    nodes {
+      id
+      title
+      slug
+      date
+      status
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+        }
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 21: SCHEMA INTROSPECTION (untuk lihat semua available fields)
+=========================================================================
+
+query IntrospectionQuery {
+  __schema {
+    types {
+      name
+      kind
+      description
+      fields {
+        name
+        type {
+          name
+          kind
+        }
+      }
+    }
+  }
+}
+
+
+=========================================================================
+QUERY 22: CHECK AVAILABLE POST FIELDS
+=========================================================================
+
+query PostFields {
+  __type(name: "Post") {
+    name
+    fields {
+      name
+      type {
+        name
+        kind
+      }
+    }
+  }
+}
+
+
+=========================================================================
+NOTES & TIPS
+=========================================================================
+
+1. GUNAKAN VARIABLES:
+   Query yang ada ($variable) boleh guna dengan Variables JSON:
+   {
+     "categoryId": 5,
+     "first": 10
+   }
+
+2. PAGINATION:
+   - Gunakan "after" untuk page seterusnya
+   - "endCursor" dari response untuk "after" next request
+   - "hasNextPage" = true kalau ada page lagi
+
+3. PERFORMANCE:
+   - Ambil field yang diperlukan SAHAJA
+   - Jangan ambil semua field jika tak perlu
+   - Guna "first" untuk limit result
+
+4. CUSTOM FIELDS (jika ada):
+   - postViewsCount
+   - ppmaAuthor
+   - classList
+   Kena register di WPGraphQL settings dulu
+
+5. SETTINGS YANG DISYORKAN:
+   - Enable Public Introspection: YES (untuk development)
+   - Enable GraphQL Debug: YES (untuk development)
+   - Max Query Depth: 15
+   - Max Query Complexity: 1000
+   - Batch Queries: ENABLED
+
+=========================================================================
+END OF QUERIES
+=========================================================================

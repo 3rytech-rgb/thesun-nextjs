@@ -1,5 +1,5 @@
 // components/home/categories/SpotlightSection.tsx
-import CategoryLayout1 from './CategoryLayout1';
+import CategoryLayout1 from './CategoryLayout4';
 import { WPPostWithMedia, WPCategory } from '../../../types/wordpress';
 
 interface SpotlightSectionProps {

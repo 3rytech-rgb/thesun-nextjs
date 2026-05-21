@@ -3,8 +3,7 @@ import Link from 'next/link';
 import { WPPost, WPCategory } from '../../../types/wordpress';
 import { getPostUrl } from '../../../lib/wordpress';
 import { cleanTextContent } from '../utils/contentCleaner';
-import { formatRelativeTime } from '../utils/timeFormatter';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface OpinionSectionProps {
   posts: WPPost[];
@@ -18,7 +17,6 @@ export default function OpinionSection({ posts, categories, isLast = false }: Op
   if (posts.length === 0) return null;
 
   const formatDateSafe = (dateString: string) => {
-    // Always use simple format to avoid hydration mismatch
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
@@ -29,82 +27,100 @@ export default function OpinionSection({ posts, categories, isLast = false }: Op
   const post = posts[currentIndex];
 
   return (
-    <div className="w-full bg-gradient-to-br from-white via-gray-50 to-gray-100 p-6 rounded-xl shadow-2xl border border-gray-200/50 backdrop-blur-sm">
-      {/* Section Header */}
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 text-center tracking-wide">
-           Opinion
-        </h2>
-        <div className="w-20 h-1 bg-gradient-to-r from-red-500 to-pink-500 rounded-full mx-auto mt-2"></div>
-      </div>
+    <section className="relative overflow-hidden rounded-3xl h-full flex flex-col"
+      style={{ background: 'linear-gradient(135deg, #fff5f5, #fce4ec, #f8e8ff)' }}
+    >
+      {/* Decorative blobs */}
+      <div className="absolute -top-16 -right-16 w-48 h-48 bg-pink-300/20 rounded-full blur-3xl"></div>
+      <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-purple-300/20 rounded-full blur-3xl"></div>
 
-      {/* Current Opinion Post */}
-      <div className="bg-white/70 backdrop-blur-sm rounded-lg p-6 shadow-lg border border-white/50 hover:shadow-xl transition-all duration-300">
-        <div className="text-center transition-all duration-500 ease-in-out">
-          {/* Profile Picture - Bigger and Centered */}
-          {post.authors && post.authors.length > 0 && post.authors[0].avatar_url && (
-            <div className="relative mb-4">
-              <img
-                src={post.authors[0].avatar_url.url}
-                alt={post.authors[0].display_name}
-                className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-lg hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-red-500 rounded-full border-2 border-white"></div>
+      <div className="relative z-10 flex flex-col h-full p-5 sm:p-6 lg:p-8">
+        {/* Header */}
+        <div className="mb-4 sm:mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></span>
+            <span className="text-pink-600 text-xs font-semibold uppercase tracking-widest">Perspectives</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600">
+            Speak Up
+          </h2>
+        </div>
+
+        {/* Content - flex-1 to fill remaining height */}
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 bg-white/70 backdrop-blur-md rounded-2xl p-5 sm:p-6 border border-pink-200/50 hover:border-pink-300 transition-all duration-500 flex flex-col shadow-lg shadow-pink-200/30">
+            <div className="text-center transition-all duration-500 ease-in-out flex flex-col h-full">
+              {/* Featured image */}
+              {(post as any).featured_media_url && (
+                <div className="mb-4 -mx-5 sm:-mx-6 -mt-5 sm:-mt-6 overflow-hidden rounded-t-2xl">
+                  <img
+                    src={(post as any).featured_media_url}
+                    alt={cleanTextContent(post.title.rendered)}
+                    className="w-full h-40 sm:h-48 object-cover"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                </div>
+              )}
+
+              {/* Author */}
+              {post.authors && post.authors.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-gray-700 text-xs sm:text-sm font-semibold uppercase tracking-wide">
+                    {post.authors[0].display_name}
+                  </p>
+                </div>
+              )}
+
+              {/* Title */}
+              <Link href={getPostUrl(post)} className="block mb-auto">
+                <h4
+                  className="text-lg sm:text-xl font-bold text-gray-900 hover:text-pink-600 transition-colors cursor-pointer line-clamp-2 mb-3 leading-tight"
+                  dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }}
+                />
+              </Link>
+
+              {/* Excerpt */}
+              {post.excerpt?.rendered && (
+                <p className="text-gray-600 text-xs sm:text-sm mb-4 leading-relaxed line-clamp-3 flex-shrink-0"
+                  dangerouslySetInnerHTML={{ __html: cleanTextContent(post.excerpt.rendered) }} />
+              )}
+
+              {/* Date + counter */}
+              <div className="flex items-center justify-between mt-auto pt-3 border-t border-pink-100 flex-shrink-0">
+                <span className="text-gray-400 text-xs font-medium">{formatDateSafe(post.date)}</span>
+                <span className="text-gray-400 text-xs font-mono">{currentIndex + 1} / {posts.length}</span>
+              </div>
             </div>
-          )}
-          {/* Author Name */}
-          <p className="text-sm text-gray-800 font-semibold mb-3 uppercase tracking-wide">
-            {post.authors && post.authors.length > 0 ? post.authors[0].display_name : 'Unknown'}
-          </p>
-          {/* Title */}
-          <Link href={getPostUrl(post)}>
-            <h4
-              className="text-xl font-bold text-gray-900 hover:text-red-600 transition-colors cursor-pointer line-clamp-2 mb-3 leading-tight"
-              dangerouslySetInnerHTML={{ __html: cleanTextContent(post.title.rendered) }}
-            />
-          </Link>
-          {/* Excerpt - Limited to 5 lines */}
-          {post.excerpt?.rendered && (
-            <p className="text-sm text-gray-700 mb-4 leading-relaxed line-clamp-5" dangerouslySetInnerHTML={{ __html: cleanTextContent(post.excerpt.rendered) }} />
-          )}
-          {/* Date and Time */}
-          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{formatDateSafe(post.date)}</p>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between mt-4 gap-3">
+            <div className="flex gap-2">
+              <button onClick={prev}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white hover:bg-pink-50 border border-pink-200 flex items-center justify-center transition-all duration-300 active:scale-90 shadow-sm"
+                aria-label="Previous">
+                <svg className="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button onClick={next}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white hover:bg-pink-50 border border-pink-200 flex items-center justify-center transition-all duration-300 active:scale-90 shadow-sm"
+                aria-label="Next">
+                <svg className="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+            <Link href="/category/opinion"
+              className="inline-flex items-center gap-1.5 text-pink-400 hover:text-pink-600 text-xs font-medium transition-colors group">
+              View all
+              <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
         </div>
       </div>
-
-      {/* Navigation Buttons */}
-      <div className="flex justify-between mt-6">
-        <button
-          onClick={prev}
-          className="bg-red-600 text-white px-3 py-1 rounded-full hover:bg-red-700 transition-colors text-sm"
-        >
-          ← Prev
-        </button>
-        <button
-          onClick={next}
-          className="bg-red-600 text-white px-3 py-1 rounded-full hover:bg-red-700 transition-colors text-sm"
-        >
-          Next →
-        </button>
-      </div>
-
-      {/* View All Link */}
-      <div className="text-center mt-6 pt-4 border-t border-gray-300">
-        <Link
-          href={`/category/opinion`}
-          className="inline-flex items-center text-red-600 hover:text-red-800 font-medium transition-colors text-sm"
-        >
-          View all opinion stories
-          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </Link>
-      </div>
-
-      {/* Line break */}
-      {!isLast && (
-        <div className="border-t border-gray-300 my-6"></div>
-      )}
-    </div>
+    </section>
   );
 }

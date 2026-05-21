@@ -286,12 +286,12 @@ export default function AuthorListingPage({ authors: initialAuthors, categories 
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">No Authors Found</h3>
               <p className="text-gray-600 max-w-md mx-auto mb-6">
-                We couldn't find any authors with published articles. This could be because:
+                We couldn&apos;t find any authors with published articles. This could be because:
               </p>
               <ul className="text-gray-600 text-left max-w-md mx-auto mb-8 space-y-2">
                 <li className="flex items-start">
                   <span className="text-blue-500 mr-2">•</span>
-                  <span>Authors haven't published any articles yet</span>
+                  <span>Authors haven&apos;t published any articles yet</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-500 mr-2">•</span>

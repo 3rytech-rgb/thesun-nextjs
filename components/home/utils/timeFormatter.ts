@@ -1,5 +1,4 @@
-// Helper function untuk format relative time
-export function formatRelativeTime(dateString: string): string {
+function getRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -14,4 +13,9 @@ export function formatRelativeTime(dateString: string): string {
   } else {
     return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
   }
+}
+
+export function formatRelativeTime(dateString: string): string {
+  if (!dateString) return '';
+  return getRelativeTime(dateString);
 }

@@ -15,21 +15,10 @@ interface TagPageProps {
 }
 
 // Function to clean HTML entities
+import he from 'he';
 function cleanHtmlContent(html: string): string {
   if (!html || typeof html !== 'string') return '';
-  return html
-    .replace(/&amp;/g, '&')
-    .replace(/&#8217;/g, "'")
-    .replace(/&#038;/g, '&')
-    .replace(/&#8211;/g, '-')
-    .replace(/&#8212;/g, '--')
-    .replace(/&#8230;/g, '...')
-    .replace(/&[#\w]+;/g, '')
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ')
-    .trim();
+  return he.decode(html).trim();
 }
 
 export default function TagPage({ tag, posts, categories, allTags }: TagPageProps) {
@@ -45,7 +34,7 @@ export default function TagPage({ tag, posts, categories, allTags }: TagPageProp
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Tag Not Found</h1>
-            <p className="text-gray-600 mb-6">The tag you're looking for doesn't exist.</p>
+            <p className="text-gray-600 mb-6">The tag you&apos;re looking for doesn&apos;t exist.</p>
             <Link href="/" className="text-red-600 hover:text-red-700 font-medium">
               ← Back to Home
             </Link>

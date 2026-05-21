@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { CategoryItem } from './types';
 import { useState, useEffect, useRef } from 'react';
@@ -18,9 +20,10 @@ export default function DesktopNav({
   dropdownContainerRef
 }: DesktopNavProps) {
   const [hoverDropdown, setHoverDropdown] = useState<number | null>(null);
-  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [dropdownHeights, setDropdownHeights] = useState<Record<number, number>>({});
   const dropdownRefs = useRef<Record<number, HTMLDivElement>>({});
+  const enterTimer = useRef<number | null>(null);
+  const leaveTimer = useRef<number | null>(null);
 
   // Measure dropdown heights on mount and when activeDropdown changes
   useEffect(() => {
@@ -35,41 +38,29 @@ export default function DesktopNav({
     setDropdownHeights(heights);
   }, [activeDropdown]);
 
-  // Handle hover dengan delay untuk mencegah flickering
   const handleMouseEnter = (id: number) => {
-    if (hoverTimeout) {
-      clearTimeout(hoverTimeout);
-    }
-    
-    setHoverTimeout(
-      setTimeout(() => {
-        setHoverDropdown(id);
-        setActiveDropdown(id);
-      }, 50) // Reduced delay for faster response
-    );
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    enterTimer.current = window.setTimeout(() => {
+      setHoverDropdown(id);
+      setActiveDropdown(id);
+    }, 30);
   };
 
   const handleMouseLeave = () => {
-    if (hoverTimeout) {
-      clearTimeout(hoverTimeout);
-    }
-    
-    setHoverTimeout(
-      setTimeout(() => {
-        setHoverDropdown(null);
-        setActiveDropdown(null);
-      }, 100) // Reduced delay for faster closing
-    );
+    if (enterTimer.current) clearTimeout(enterTimer.current);
+    leaveTimer.current = window.setTimeout(() => {
+      setHoverDropdown(null);
+      setActiveDropdown(null);
+    }, 80);
   };
 
   // Cleanup timeout pada unmount
   useEffect(() => {
     return () => {
-      if (hoverTimeout) {
-        clearTimeout(hoverTimeout);
-      }
+      if (enterTimer.current) clearTimeout(enterTimer.current);
+      if (leaveTimer.current) clearTimeout(leaveTimer.current);
     };
-  }, [hoverTimeout]);
+  }, []);
 
   const NavItemWithDropdown = ({ item }: { item: CategoryItem }) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
@@ -86,11 +77,11 @@ export default function DesktopNav({
         >
            <button
             onClick={() => toggleDropdown(item.id)}
-            className={`flex items-center font-medium transition-all duration-200 py-1.5 px-2 lg:px-3 rounded-lg border ${
-              isActive 
-                ? 'text-white bg-slate-800 border-slate-600 shadow-lg scale-105' 
-                : 'text-white hover:text-blue-300 border-transparent hover:bg-slate-800 hover:border-slate-600'
-            } text-xs lg:text-sm relative z-10 transform-gpu`}
+              className={`flex items-center font-medium transition-all duration-200 py-1 px-1.5 lg:px-2 rounded-lg border ${
+                isActive 
+                  ? 'text-white bg-slate-800 border-slate-600 shadow-lg' 
+                  : 'text-white hover:text-blue-300 border-transparent hover:bg-slate-800 hover:border-slate-600'
+              } text-sm relative z-10 transform-gpu`}
           >
             <span className="relative whitespace-nowrap">
               {item.name}
@@ -141,7 +132,7 @@ export default function DesktopNav({
                 <div className="p-3">
                   {/* All items link */}
                   <Link
-                    href={`/category/${item.slug}`}
+                    href={item.slug.startsWith('/') ? item.slug : `/category/${item.slug}`}
                     className="group/all block px-4 py-3 text-white hover:bg-slate-700 transition-all duration-200 rounded-lg mb-2 border-b border-slate-600 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-blue-900 hover:to-slate-800"
                     onClick={() => setActiveDropdown(null)}
                   >
@@ -157,26 +148,29 @@ export default function DesktopNav({
                   
                   {/* Sub items */}
                   <div className="space-y-1">
-                    {item.subItems.map((subItem: any) => (
-                      <Link
-                        key={subItem.id}
-                        href={`/category/${subItem.slug}`}
-                        className="group/sub block px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 transition-all duration-200 rounded-lg hover:shadow-md transform-gpu hover:scale-[1.02]"
-                        onClick={() => setActiveDropdown(null)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center min-w-0">
-                            <div className="flex-shrink-0 w-1.5 h-1.5 bg-blue-400 rounded-full mr-3 group-hover/sub:scale-125 transition-transform duration-200"></div>
-                            <span className="text-sm truncate group-hover/sub:translate-x-1 transition-transform duration-200">
-                              {subItem.name}
-                            </span>
+                    {item.subItems.map((subItem: any) => {
+                      const subHref = subItem.slug.startsWith('/') ? subItem.slug : `/category/${subItem.slug}`;
+                      return (
+                        <Link
+                          key={subItem.id}
+                          href={subHref}
+                          className="group/sub block px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 transition-all duration-200 rounded-lg hover:shadow-md transform-gpu hover:scale-[1.02]"
+                          onClick={() => setActiveDropdown(null)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center min-w-0">
+                              <div className="flex-shrink-0 w-1.5 h-1.5 bg-blue-400 rounded-full mr-3 group-hover/sub:scale-125 transition-transform duration-200"></div>
+                              <span className="text-sm truncate group-hover/sub:translate-x-1 transition-transform duration-200">
+                                {subItem.name}
+                              </span>
+                            </div>
+                            <svg className="flex-shrink-0 w-3 h-3 text-slate-500 group-hover/sub:text-green-400 group-hover/sub:translate-x-1 transition-all duration-200 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
                           </div>
-                          <svg className="flex-shrink-0 w-3 h-3 text-slate-500 group-hover/sub:text-green-400 group-hover/sub:translate-x-1 transition-all duration-200 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
-                      </Link>
-                    ))}
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -195,8 +189,8 @@ export default function DesktopNav({
 
     return (
          <Link
-            href={item.name === 'Home' ? '/' : `/category/${item.slug}`}
-            className="group relative flex items-center text-white hover:text-blue-300 font-medium transition-all duration-200 py-1.5 px-2 lg:px-3 rounded-lg hover:bg-slate-800 border border-transparent hover:border-slate-600 text-xs lg:text-sm transform-gpu hover:scale-105"
+            href={item.slug.startsWith('/') ? item.slug : item.name === 'Home' ? '/' : `/category/${item.slug}`}
+              className="group relative flex items-center text-white hover:text-blue-300 font-medium transition-all duration-200 py-1 px-1.5 lg:px-2 rounded-lg hover:bg-slate-800 border border-transparent hover:border-slate-600 text-sm transform-gpu"
             key={item.id}
             onMouseEnter={() => handleMouseEnter(item.id)}
             onMouseLeave={handleMouseLeave}
@@ -229,11 +223,11 @@ export default function DesktopNav({
       >
          <button
           onClick={() => toggleDropdown(item.id)}
-          className={`flex items-center font-medium transition-all duration-200 py-1.5 px-2 lg:px-3 rounded-lg border ${
-            isActive 
-              ? 'text-white bg-slate-800 border-slate-600 shadow-lg scale-105' 
-              : 'text-white hover:text-blue-300 border-transparent hover:bg-slate-800 hover:border-slate-600'
-          } text-xs lg:text-sm relative z-10 transform-gpu`}
+           className={`flex items-center font-medium transition-all duration-200 py-1 px-1.5 lg:px-2 rounded-lg border ${
+             isActive 
+               ? 'text-white bg-slate-800 border-slate-600 shadow-lg' 
+               : 'text-white hover:text-blue-300 border-transparent hover:bg-slate-800 hover:border-slate-600'
+           } text-xs relative z-10 transform-gpu`}
         >
           <span className="whitespace-nowrap">{item.name}</span>
           <svg 
@@ -275,26 +269,29 @@ export default function DesktopNav({
                   style={{ maxHeight: '250px' }}
                 >
               <div className="p-3">
-                {item.subItems.map((subItem: any) => (
-                  <Link
-                    key={subItem.id}
-                    href={`/category/${subItem.slug}`}
-                    className="group/item block px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 transition-all duration-200 rounded-lg hover:shadow-md transform-gpu hover:scale-[1.02]"
-                    onClick={() => setActiveDropdown(null)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center min-w-0">
-                        <div className="flex-shrink-0 w-1.5 h-1.5 bg-green-400 rounded-full mr-3 group-hover/item:scale-125 transition-transform duration-200"></div>
-                        <span className="text-sm truncate group-hover/item:translate-x-1 transition-transform duration-200">
-                          {subItem.name}
-                        </span>
+                {item.subItems.map((subItem: any) => {
+                  const subHref = subItem.slug.startsWith('/') ? subItem.slug : `/category/${subItem.slug}`;
+                  return (
+                    <Link
+                      key={subItem.id}
+                      href={subHref}
+                      className="group/item block px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 transition-all duration-200 rounded-lg hover:shadow-md transform-gpu hover:scale-[1.02]"
+                      onClick={() => setActiveDropdown(null)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center min-w-0">
+                          <div className="flex-shrink-0 w-1.5 h-1.5 bg-green-400 rounded-full mr-3 group-hover/item:scale-125 transition-transform duration-200"></div>
+                          <span className="text-sm truncate group-hover/item:translate-x-1 transition-transform duration-200">
+                            {subItem.name}
+                          </span>
+                        </div>
+                        <svg className="flex-shrink-0 w-3 h-3 text-slate-500 group-hover/item:text-green-400 group-hover/item:translate-x-1 transition-all duration-200 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                       </div>
-                      <svg className="flex-shrink-0 w-3 h-3 text-slate-500 group-hover/item:text-green-400 group-hover/item:translate-x-1 transition-all duration-200 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
             
@@ -311,9 +308,8 @@ export default function DesktopNav({
   };
 
   return (
-    <div className="mt-1 hidden lg:block overflow-visible relative" ref={dropdownContainerRef}>
+    <div className="hidden lg:flex flex-1 items-center justify-center overflow-visible relative px-2" ref={dropdownContainerRef}>
       <style jsx global>{`
-        /* Fast, optimized custom scrollbar */
         .custom-scrollbar {
           scrollbar-width: thin;
           scrollbar-color: #4b5563 #1f2937;
@@ -339,14 +335,12 @@ export default function DesktopNav({
           background: #6b7280;
         }
         
-        /* Hardware acceleration for smooth animations */
         .transform-gpu {
           transform: translateZ(0);
           backface-visibility: hidden;
           perspective: 1000px;
         }
         
-        /* Optimize for mobile/tablet responsiveness */
         @media (max-width: 1024px) {
           .transform-gpu {
             transform: none;
@@ -354,7 +348,7 @@ export default function DesktopNav({
         }
       `}</style>
       
-      <nav className="flex flex-wrap justify-center gap-1 lg:gap-2 items-center relative z-40">
+      <nav className="flex items-center justify-center gap-0.5 lg:gap-1 relative z-40">
         {mainNavItems.map((item) => {
           if (item.external) {
             return (
@@ -368,7 +362,7 @@ export default function DesktopNav({
                 <img 
                   src="/images/ipaper.png"
                   alt="iPaper"
-                  className="h-8 w-auto group-hover/paper:brightness-110 transition-all duration-200"
+                  className="h-7 w-auto group-hover/paper:brightness-110 transition-all duration-200"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     const fallback = document.createElement('div');
