@@ -1,4 +1,4 @@
-import { GetStaticProps } from 'next';
+import { GetStaticProps, GetServerSideProps } from 'next';
 import Link from 'next/link';
 import {
   getPosts,
@@ -235,7 +235,7 @@ export default function Home({
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getServerSideProps: GetServerSideProps = async () => {
   try {
     const [posts, categories, exclusivePost, topStoriesPosts, tags, pinnedPosts] = await Promise.all([
       getPosts(30),
@@ -323,7 +323,8 @@ export const getStaticProps: GetStaticProps = async () => {
       },
       revalidate: 60,
     };
-  } catch {
+  } catch (error) {
+    console.error('Error in getServerSideProps:', error);
     return {
       props: {
         posts: [],
