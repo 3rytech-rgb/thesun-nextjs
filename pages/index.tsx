@@ -141,7 +141,7 @@ export default function Home({
             {bottomPosts.length > 0 && (
               <div className="space-y-4 mt-6">
                 {[0, 2].map((start) => (
-                  <div key={start} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div key={start} className="grid grid-cols-2 gap-4">
                     {bottomPosts.slice(start, start + 2).map((post) => {
                       const catId = typeof post.categories?.[0] === 'number' ? post.categories[0] : (post.categories?.[0] as any)?.id;
                       const catName = catId ? cleanHtmlContent(categories.find(c => c.id === catId)?.name || '') : '';
