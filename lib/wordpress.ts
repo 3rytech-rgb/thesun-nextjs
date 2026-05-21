@@ -28,7 +28,7 @@ import type {
   GraphQLTagsResponse,
 } from './graphql/types';
 
-const WORDPRESS_API_URL = 'https://thesun.my/wp-json/wp/v2';
+const WORDPRESS_API_URL = process.env.NEXT_PUBLIC_WORDPRESS_REST_URL || 'https://thesun.my/wp-json/wp/v2';
 
 function processRESTPost(post: WPPost): WPPostWithMedia {
   const categories = Array.isArray(post.categories)
@@ -73,9 +73,11 @@ async function fetchRESTPosts(url: string): Promise<WPPostWithMedia[]> {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (compatible; VercelBot; +https://vercel.com)',
       'Accept': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
       'Referer': 'https://thesun.my/',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Cache-Control': 'no-cache',
     },
   });
   if (!res.ok) throw new Error(`REST API error: ${res.status} ${res.statusText}`);
