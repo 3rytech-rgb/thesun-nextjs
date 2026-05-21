@@ -48,7 +48,7 @@ export default function NetworkImage({
 
   const finalSrc = (!src || !isValidUrl(src) || hasError) ? fallbackSrc : src;
 
-  if ((hasError && imgSrc === fallbackSrc && !isValidUrl(fallbackSrc)) || !isValidUrl(finalSrc)) {
+  if ((hasError && !isValidUrl(fallbackSrc)) || !isValidUrl(finalSrc)) {
     return (
       <div 
         className={`bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center ${className}`}
