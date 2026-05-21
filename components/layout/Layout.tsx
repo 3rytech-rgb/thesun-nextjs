@@ -5,6 +5,7 @@ import Sidebar from './Header/Sidebar';
 import Footer from './Footer';
 import WCPopup from '../common/WCPopup';
 import { CountdownBanner } from '../ads/CountdownBanner';
+import { AdFullBanner } from '../ads/AdSlots';
 import { WPCategory } from '../../types/wordpress';
 import { CategoryItem } from './Header/types';
 
@@ -106,6 +107,8 @@ const Layout: React.FC<LayoutProps> = ({
             link="https://thesun.my"
           />
         </div>
+
+        <AdFullBanner className="max-w-[1200px] mx-auto px-1 sm:px-2 my-4" />
 
         <WCPopup />
 
